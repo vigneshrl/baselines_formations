@@ -1,6 +1,6 @@
 This repo consists of all the baselines for coordination MRN and formation adaptation 
 
-I'm a first year PH.D student so this repo will be actively maintained until May 2029 
+
 
 
 It contains different kinds of Gazebo worlds 
