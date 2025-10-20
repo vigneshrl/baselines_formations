@@ -1,0 +1,146 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <world name="scenario_3_high_speed_static">
+    <!-- Sunlight -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Flat ground -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- High-speed static obstacles (dense) -->
+    <!-- Wall of obstacles -->
+    <model name="wall_obstacle_1">
+      <static>true</static>
+      <pose>4.0 0.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.5 4.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.5 4.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.0 0.0 1</ambient>
+            <diffuse>0.8 0.0 0.0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Dense obstacle field -->
+    <model name="dense_obstacle_1">
+      <static>true</static>
+      <pose>6.0 1.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.8 0.8 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.8 0.8 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.0 0.8 0.0 1</ambient>
+            <diffuse>0.0 0.8 0.0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="dense_obstacle_2">
+      <static>true</static>
+      <pose>6.5 0.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.8 0.8 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.8 0.8 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.0 0.0 0.8 1</ambient>
+            <diffuse>0.0 0.0 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="dense_obstacle_3">
+      <static>true</static>
+      <pose>7.0 -1.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.8 0.8 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.8 0.8 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.0 1</ambient>
+            <diffuse>0.8 0.8 0.0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- TurtleBot3 Robots -->
+    <model name="turtlebot3_0">
+      <pose>0.0 0.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_1">
+      <pose>0.0 1.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_2">
+      <pose>0.0 2.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_3">
+      <pose>0.0 3.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+  </world>
+</sdf>

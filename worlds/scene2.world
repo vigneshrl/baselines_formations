@@ -1,0 +1,117 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <world name="scene2">
+    <!-- Sunlight -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Flat ground -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Dynamic Obstacle 1 - Moving horizontally -->
+    <model name="dynamic_obstacle_1">
+      <pose>3.0 0.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.0 1.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>1.0 1.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0.0 1</ambient>
+            <diffuse>1.0 0.5 0.0 1</diffuse>
+          </material>
+        </visual>
+        <inertial>
+          <mass>10.0</mass>
+          <inertia>
+            <ixx>1.0</ixx>
+            <iyy>1.0</iyy>
+            <izz>1.0</izz>
+          </inertia>
+        </inertial>
+      </link>
+      <plugin name="move_plugin" filename="libgazebo_ros_planar_move.so">
+        <command_topic>cmd_vel</command_topic>
+        <odometry_topic>odom</odometry_topic>
+        <odometry_frame>odom</odometry_frame>
+        <base_frame_id>base_link</base_frame_id>
+      </plugin>
+    </model>
+
+    <!-- Dynamic Obstacle 2 - Moving in circle -->
+    <model name="dynamic_obstacle_2">
+      <pose>7.0 0.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.5</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.5</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 0.5 1</ambient>
+            <diffuse>0.0 1.0 0.5 1</diffuse>
+          </material>
+        </visual>
+        <inertial>
+          <mass>5.0</mass>
+          <inertia>
+            <ixx>1.0</ixx>
+            <iyy>1.0</iyy>
+            <izz>1.0</izz>
+          </inertia>
+        </inertial>
+      </link>
+    </model>
+
+    <!-- TurtleBot3 Robots -->
+    <model name="turtlebot3_0">
+      <pose>0.0 0.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_1">
+      <pose>0.0 1.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_2">
+      <pose>0.0 2.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_3">
+      <pose>0.0 3.0 0.0 0 0 0</pose>
+      <include>
+        <uri>model://turtlebot3_burger</uri>
+      </include>
+    </model>
+  </world>
+</sdf>

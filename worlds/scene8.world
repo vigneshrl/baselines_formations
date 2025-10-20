@@ -1,0 +1,69 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <world name="simple_dynamic_world">
+    <!-- Sunlight -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Flat ground -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Simple static obstacles first -->
+    <model name="static_obstacle_1">
+      <static>true</static>
+      <pose>5.0 0.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.0 1.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>1.0 1.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- TurtleBot3 Robots -->
+    <model name="turtlebot3_0">
+      <pose>0.0 0.0 0.0 0 0 0</pose>
+      <include>
+        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_1">
+      <pose>0.0 1.0 0.0 0 0 0</pose>
+      <include>
+        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_2">
+      <pose>0.0 2.0 0.0 0 0 0</pose>
+      <include>
+        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
+      </include>
+    </model>
+
+    <model name="turtlebot3_3">
+      <pose>0.0 3.0 0.0 0 0 0</pose>
+      <include>
+        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
+      </include>
+    </model>
+  </world>
+</sdf>
