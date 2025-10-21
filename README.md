@@ -5,13 +5,13 @@ This repo consists of all the baselines for coordination MRN and formation adapt
 
 It contains different kinds of Gazebo worlds 
 
-#World 1 
+## World 1 
 ![alt text](images/narrow_region.png)
 
-#World 2
+## World 2
 ![alt text](images/Static_obs.png)
 
-#World 3
+## World 3
 ![alt text](images/Dense%20static%20obs.png)
 
 
