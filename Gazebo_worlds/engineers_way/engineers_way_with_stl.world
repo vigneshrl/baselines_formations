@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <world name="default">
+
+    <!-- Sunlight -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Flat ground -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Your STL model -->
+    <model name="engineers_way">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <visual name="visual">
+          <geometry>
+            <mesh>
+              <uri>file:///home/vignesh/RA-L/workspaces/ros1_ws/engineers_way/meshes /engineers_way_humans.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.8 1.0 0.8 1</ambient>
+            <diffuse>0.8 1.0 0.8 1</diffuse>
+            <specular>0.1 1.0 0.1 1</specular>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>file:///home/vignesh/RA-L/workspaces/ros1_ws/engineers_way/meshes /engineers_way_humans.stl</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+  </world>
+</sdf>
