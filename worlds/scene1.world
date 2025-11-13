@@ -100,33 +100,5 @@
       </link>
     </model>
 
-    <!-- TurtleBot3 Robots -->
-    <model name="turtlebot3_0">
-      <pose>0.0 0.0 0.0 0 0 0</pose>
-      <include>
-        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
-      </include>
-    </model>
-
-    <model name="turtlebot3_1">
-      <pose>0.0 1.0 0.0 0 0 0</pose>
-      <include>
-        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
-      </include>
-    </model>
-
-    <model name="turtlebot3_2">
-      <pose>0.0 2.0 0.0 0 0 0</pose>
-      <include>
-        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
-      </include>
-    </model>
-
-    <model name="turtlebot3_3">
-      <pose>0.0 3.0 0.0 0 0 0</pose>
-      <include>
-        <uri>file:///opt/ros/foxy/share/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf</uri>
-      </include>
-    </model>
   </world>
 </sdf>
