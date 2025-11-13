@@ -1,7 +1,10 @@
 # Baselines for Coordinated Multi-Robot Navigation
 
 This repository contains baseline implementations for coordinated multi-robot navigation (MRN) methods, tested in both 3D and 2D simulation environments.
-
+## Dependencies
+- pyrobosim (you can just `pip install pyrobosim`)
+- ROS1 & ROS2  
+- `sudo apt install ros-noetic-turtlebot3-msgs`
 ## Simulation Environments
 
 Tests are conducted in both 3D and 2D simulators:
@@ -27,13 +30,15 @@ The baselines are categorized into two groups:
 
 To run the DEFORM baseline:
 1. Clone this repository
-2. Navigate to the DEFORM directory
-3. Build the package (requires ROS1/Noetic):
+2. Install all the dependencies and complete the Prerequisites step
+3. Navigate to the DEFORM directory
+4. Build the package (requires ROS1/Noetic):
    ```bash
    source /opt/ros/noetic/setup.bash
    cd <path_to_deform>
    catkin_make
    ```
+5.Follow the same instructions mentioned in the repo 
 
 ## Additional Resources
 
