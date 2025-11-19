@@ -22,7 +22,7 @@ The baselines are categorized into two groups:
 ### General MRN Methods
 1. **ORCA**
 2. **CBFs**
-3. **RVO**
+3. **DRL-VO**
 
 ## Setup Instructions
 
