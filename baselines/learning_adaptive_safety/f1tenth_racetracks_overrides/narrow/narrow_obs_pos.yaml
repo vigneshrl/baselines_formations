@@ -1,0 +1,15 @@
+scenario: narrow
+# All positions and dimensions in map frame (metres).
+
+toll_pillars:
+  []
+
+narrow_regions:
+  - center_m: [16.67947, 13.90933]
+    gap_width_m: 3.10464
+    block_width_m: 2.88288
+    block_length_m: 17.74083
+    angle_deg: 159.856
+
+obstacles:
+  []

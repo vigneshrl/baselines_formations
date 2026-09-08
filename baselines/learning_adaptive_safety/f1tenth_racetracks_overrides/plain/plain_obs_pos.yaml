@@ -1,0 +1,11 @@
+scenario: plain
+# All positions and dimensions in map frame (metres).
+
+toll_pillars:
+  []
+
+narrow_regions:
+  []
+
+obstacles:
+  []

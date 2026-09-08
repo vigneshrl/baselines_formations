@@ -1,0 +1,20 @@
+task_type: 1
+vehicle_number: 4
+initial_shape_positions:
+  vehicle_pos_1: &id001
+    x: 0.0
+    y: -0.9
+  vehicle_pos_2: &id002
+    x: 0.0
+    y: -0.3
+  vehicle_pos_3: &id003
+    x: 0.0
+    y: 0.3
+  vehicle_pos_4: &id004
+    x: 0.0
+    y: 0.9
+desired_shape_positions:
+  vehicle_pos_1: *id001
+  vehicle_pos_2: *id002
+  vehicle_pos_3: *id003
+  vehicle_pos_4: *id004

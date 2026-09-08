@@ -1,0 +1,29 @@
+num_agents: 4
+map_name: open_narrow_obs
+gym_root: /opt/f1tenth_gym
+rate_hz: 50
+cmd_timeout: 2.0
+render: false
+dynamics: st
+initial_poses:
+- - 40.877766
+  - -15.276321
+  - -1.6123
+- - 41.477253
+  - -15.301188
+  - -1.6123
+- - 42.076736
+  - -15.326056
+  - -1.6123
+- - 42.67622
+  - -15.350922
+  - -1.6123
+goal_x: 41.176262
+goal_y: -34.621677
+goal_yaw: -1.6123
+goal_delay_s: 5.0
+goal_republish_period_s: 2.0
+auto_publish_goal: true
+tb_num: 4
+episode_end_mode: narrow_clear
+episode_timeout_s: 600.0

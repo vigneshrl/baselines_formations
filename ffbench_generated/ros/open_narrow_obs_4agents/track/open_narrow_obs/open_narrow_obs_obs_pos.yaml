@@ -1,0 +1,88 @@
+scenario: bw_open_narrow000
+base_map: open_narrow
+toll_pillars: []
+obstacles:
+- kind: rect
+  type: rect
+  center_m:
+  - 38.376
+  - -1.8892
+  size_m:
+  - 0.5574
+  - 0.5231
+  angle_deg: 146.39
+  width_m: 0.5574
+  height_m: 0.5231
+- kind: disc
+  type: circle
+  center_m:
+  - 43.4847
+  - -11.2839
+  size_m:
+  - 1.5213
+  - 1.2611
+  angle_deg: 168.31
+  width_m: 1.5213
+  height_m: 1.2611
+  radius_m: 0.7607
+- kind: tri
+  type: tri
+  center_m:
+  - 31.5852
+  - 1.8338
+  size_m:
+  - 0.5038
+  - 1.7004
+  angle_deg: 6.05
+  width_m: 0.5038
+  height_m: 1.7004
+- kind: tri
+  type: tri
+  center_m:
+  - 35.7475
+  - -10.8899
+  size_m:
+  - 1.7085
+  - 1.258
+  angle_deg: 53.95
+  width_m: 1.7085
+  height_m: 1.258
+- kind: rect
+  type: rect
+  center_m:
+  - 52.4524
+  - -66.3273
+  size_m:
+  - 0.5396
+  - 0.674
+  angle_deg: 120.71
+  width_m: 0.5396
+  height_m: 0.674
+- kind: rect
+  type: rect
+  center_m:
+  - 55.2832
+  - -69.0
+  size_m:
+  - 1.0371
+  - 1.8961
+  angle_deg: 176.55
+  width_m: 1.0371
+  height_m: 1.8961
+- kind: disc
+  type: circle
+  center_m:
+  - 20.1137
+  - 3.7931
+  size_m:
+  - 1.4106
+  - 1.4638
+  angle_deg: 70.01
+  width_m: 1.4106
+  height_m: 1.4638
+  radius_m: 0.7319
+narrow_regions:
+- center_m:
+  - 41.6799
+  - -22.4794
+  gap_width_m: 3.188

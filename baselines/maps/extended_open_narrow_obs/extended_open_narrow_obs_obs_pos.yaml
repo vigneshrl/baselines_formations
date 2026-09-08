@@ -1,0 +1,47 @@
+scenario: bw_on_obs_ext000
+base_map: on_obs_ext
+toll_pillars: []
+obstacles:
+- kind: tri
+  family: corner
+  placement: wall
+  center_m: [6.9046, -201.1502]
+  size_m: [0.9343, 1.1802]
+  angle_deg: 160.11
+  s_m: 263.01
+  curv: 0.0552
+- kind: tri
+  family: corner
+  placement: wall
+  center_m: [34.4488, -2.2424]
+  size_m: [1.0009, 1.3001]
+  angle_deg: 57.94
+  s_m: 33.13
+  curv: 0.0556
+- kind: disc
+  family: centre
+  placement: wall
+  center_m: [17.3727, -164.8029]
+  size_m: [1.0483, 1.7464]
+  angle_deg: 40.89
+  s_m: 226.87
+  curv: 0.0
+- kind: disc
+  family: centre
+  placement: wall
+  center_m: [13.821, -172.0073]
+  size_m: [0.6176, 1.6657]
+  angle_deg: 141.68
+  s_m: 234.9
+  curv: 0.0
+- kind: tri
+  family: centre
+  placement: wall
+  center_m: [59.2348, -80.302]
+  size_m: [0.582, 0.9706]
+  angle_deg: 27.05
+  s_m: 117.45
+  curv: 0.0
+narrow_regions:
+- center_m: [36.96649930858412, -48.48849184074754]
+  gap_width_m: 3.188

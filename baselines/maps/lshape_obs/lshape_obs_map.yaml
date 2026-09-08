@@ -1,0 +1,6 @@
+image: lshape_obs_map.pgm
+resolution: 0.0625
+origin: [-14.625, -73.625, 0.0]
+negate: 0
+occupied_thresh: 0.45
+free_thresh: 0.196

@@ -1,0 +1,2 @@
+baseline,sim,map,n_agents,dynamics,target_speed,trials,avg_speed_mps,success,time_to_goal_s,flow_rate,deformability,n_completed,n_collided,safety_rate,collision,spread_at_entry_m,spread_at_narrow_m,steps,sim_time_s,wall_time_s
+gcbf,f1tenth,standard_ON,4,st,nan,1,0.558,0.0,inf,0.0,nan,2.0,0.0,0.5,0.0,3.339,0.0,4000.0,40.0,29.4

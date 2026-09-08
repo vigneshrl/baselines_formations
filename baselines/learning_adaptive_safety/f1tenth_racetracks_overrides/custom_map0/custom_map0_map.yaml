@@ -1,0 +1,6 @@
+image: custom_map0_map.pgm
+resolution: 0.062500
+origin: [-80.39392868079327,-43.59054398507875,0.000000]
+negate: 0
+occupied_thresh: 0.45
+free_thresh: 0.196

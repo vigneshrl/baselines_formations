@@ -1,0 +1,50 @@
+scenario: obstacle_rect
+# All positions and dimensions in map frame (metres).
+
+toll_pillars:
+  []
+
+narrow_regions:
+  []
+
+obstacles:
+  - type: rect
+    center_m: [-30.28413, 34.92912]
+    width_m: 2.31177
+    height_m: 2.56676
+    angle_deg: 161.069
+  - type: rect
+    center_m: [-42.48265, -10.45944]
+    width_m: 1.71199
+    height_m: 1.52973
+    angle_deg: 149.173
+  - type: rect
+    center_m: [15.3206, 17.98012]
+    width_m: 2.30579
+    height_m: 1.22351
+    angle_deg: 64.524
+  - type: rect
+    center_m: [-36.31104, 27.42738]
+    width_m: 2.07607
+    height_m: 1.62219
+    angle_deg: 11.441
+  - type: rect
+    center_m: [-19.26499, -10.4698]
+    width_m: 2.24104
+    height_m: 2.09825
+    angle_deg: 159.698
+  - type: rect
+    center_m: [-5.17892, -24.95382]
+    width_m: 2.21576
+    height_m: 2.28938
+    angle_deg: 101.03
+  - type: rect
+    center_m: [20.92155, 1.40916]
+    width_m: 1.91997
+    height_m: 1.7723
+    angle_deg: 4.575
+  - type: rect
+    center_m: [31.5444, 4.61798]
+    width_m: 2.36188
+    height_m: 2.49958
+    angle_deg: 57.241

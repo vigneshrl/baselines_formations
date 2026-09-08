@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(ffbench_ros)
+find_package(catkin REQUIRED COMPONENTS rospy nav_msgs)
+catkin_package()
+catkin_install_python(PROGRAMS scripts/metrics_node.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

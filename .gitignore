@@ -1,4 +1,12 @@
 DEFORM_backup/
 __pycache__/
 *.pyc
-
+# ffbench: rebuilt on demand, never committed
+ffbench_generated/build_ctx/
+ffbench_generated/*.sif
+ffbench_generated/*.log
+ffbench_generated/ros/*/results/
+ffbench_generated/external/
+baselines/Python-RVO2/build/
+baselines/Python-RVO2/*.egg-info/
+*.egg-info/

@@ -1,0 +1,55 @@
+scenario: sw_slalom_g7_5000
+base_map: mf_slalom_g7_5
+toll_pillars: []
+obstacles:
+- kind: rect
+  family: corner
+  placement: wall
+  center_m: [100.7249, 2.091]
+  size_m: [1.4415, 0.7732]
+  angle_deg: 103.98
+  s_m: 104.0
+  curv: 0.0189
+- kind: tri
+  family: corner
+  placement: wall
+  center_m: [78.4236, 3.872]
+  size_m: [0.6012, 1.2]
+  angle_deg: 133.94
+  s_m: 81.79
+  curv: 0.0187
+- kind: rect
+  family: corner
+  placement: wall
+  center_m: [39.097, -2.5409]
+  size_m: [1.0433, 0.5881]
+  angle_deg: 130.66
+  s_m: 42.41
+  curv: 0.0151
+- kind: rect
+  family: corner
+  placement: wall
+  center_m: [16.2769, -3.6763]
+  size_m: [1.7229, 1.1612]
+  angle_deg: 164.27
+  s_m: 19.19
+  curv: 0.0174
+- kind: tri
+  family: centre
+  placement: wall
+  center_m: [27.5997, -3.1645]
+  size_m: [1.7815, 0.6784]
+  angle_deg: 13.24
+  s_m: 30.29
+  curv: 0.0043
+- kind: rect
+  family: centre
+  placement: wall
+  center_m: [21.8053, 3.1696]
+  size_m: [1.3877, 1.1952]
+  angle_deg: 29.44
+  s_m: 25.24
+  curv: 0.0054
+narrow_regions:
+- center_m: [100.64457978207744, -0.8558882961526979]
+  gap_width_m: 6.062

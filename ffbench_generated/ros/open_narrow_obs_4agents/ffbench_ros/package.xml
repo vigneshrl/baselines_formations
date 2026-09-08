@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ffbench_ros</name>
+  <version>0.1.0</version>
+  <description>ffbench narrow-zone metrics node for Gazebo/ROS baseline runs</description>
+  <maintainer email="viraj570012@gmail.com">FastFunnels</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+</package>

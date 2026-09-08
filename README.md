@@ -39,7 +39,7 @@ around the pinch is scored:
 ## Results this repo reproduces
 
 Verified 2026-09-08, three independent runs each (5 jittered trials per run, 4
-agents, 5 m/s target, single-track plant). `ffbench_results/verify_all.csv`
+agents, 5 m/s target, single-track plant; DEFORM: 3 bridge + 3 native container trials). `ffbench_results/verify_all.csv`
 and `verify_repeats.csv` hold the rows; `ffbench_results/verify_*_traces.png`
 the trajectories.
 
@@ -50,7 +50,7 @@ the trajectories.
 | NMPC (decentralised, no leader) | f1tenth_gym | yes | – / 1.0 | 4.3 | 4.9 |
 | GCBF+ (pretrained) | PyRoboSim + JAX | cross-over | 3 of 4 agents / 2 of 4 agents | 0.7 / 0.6 | – |
 | LAS (CBF-PPO, 3 agents) | its own f1tenth gym | same | 0.2 | 0.74 | 14.3 |
-| DEFORM | Gazebo + TurtleBot3 | via ROS bridge | needs Docker or Apptainer, see below | | |
+| DEFORM | Gazebo + TurtleBot3 | via ROS bridge | 0.0 / 0.0 | 0.03 / 0.09 | – | creeps at cm/s in the corridor; container run |
 
 <p align="center">
   <img src="ffbench_results/verify_orca_n4_traces.png" width="100%" alt="ORCA trajectories, both backends"/>
@@ -59,7 +59,7 @@ the trajectories.
 ## Install
 
 ```bash
-git clone <this repo> && cd baselines_formations
+git clone --recurse-submodules <this repo> && cd baselines_formations   # DEFORM is a submodule
 bash ffbench/env/setup.sh            # conda env "ffbench", builds Python-RVO2, runs a smoke test
 conda activate ffbench
 export QT_QPA_PLATFORM=offscreen     # headless machines
@@ -67,11 +67,16 @@ export QT_QPA_PLATFORM=offscreen     # headless machines
 
 Optional environments, each one command: `setup.sh --gcbf` (JAX, for GCBF+;
 then `export FFBENCH_PY_GCBF=...`), `setup.sh --las` (the LAS authors' forks;
-then `export FFBENCH_PY_FASTFUNNELS=...`). DEFORM lives in a ROS Noetic
-container: `baselines/deform_docker/Dockerfile` for Docker, or
-`ffbench/ros/deform_ros.def` for Apptainer on machines without root
-(`apptainer build --fakeroot --ignore-fakeroot-command`). Exact steps in
-[`ffbench/README.md`](ffbench/README.md).
+then `export FFBENCH_PY_FASTFUNNELS=...`). DEFORM runs in a ROS Noetic
+container built from the pinned `DEFORM/` submodule, from the repo root:
+
+```bash
+docker build -t deform_ros:latest -f baselines/deform_docker/Dockerfile .                       # Docker
+apptainer build --fakeroot --ignore-fakeroot-command ffbench_generated/deform_ros.sif ffbench/ros/deform_ros.def   # no root needed
+```
+
+`run_experiment.py --deform` picks whichever exists. Exact steps and the
+container smoke test in [`ffbench/README.md`](ffbench/README.md).
 
 ## Use the results
 
@@ -113,7 +118,8 @@ baselines/               the baseline code: orca.py, leader_follower.py, gcbf_ba
 f1tenth_gym/             the vehicle simulator (install with pip install --no-deps -e ./f1tenth_gym)
 ffbench_generated/       derived map bundles (RVO2 polygons, Gazebo worlds, DEFORM configs); regenerable
 ffbench_results/         the verified rows, plots and videos shown above
-Gazebo_worlds/, models/, Pyrobosim_2D_envs/, DEFORM/   the original hand-built native scenes
+DEFORM/                  git submodule: the DEFORM planner the container is built from (patched at build time)
+legacy_native/           the earlier hand-built Gazebo and PyRoboSim scenes, kept for reference, not used by the benchmark
 ```
 
 ## Notes

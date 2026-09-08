@@ -1,0 +1,74 @@
+# Apptainer/Singularity equivalent of baselines/deform_docker/Dockerfile.
+# Build from the repo root (run `git submodule update --init DEFORM` first):
+#     apptainer build --fakeroot --ignore-fakeroot-command ffbench_generated/deform_ros.sif ffbench/ros/deform_ros.def
+# (--ignore-fakeroot-command: user-namespace mode; the host fakeroot helper is
+#  too new for the Ubuntu 20.04 base and apt only needs uid 0 mapped)
+# Runtime: ffbench/baselines/deform.py drives it with `apptainer exec` and the
+# same bind mounts the Docker driver uses.
+Bootstrap: docker
+From: osrf/ros:noetic-desktop-full
+
+%files
+    f1tenth_gym /opt/f1tenth_gym
+    baselines/deform_docker/f1tenth_deform_bridge /opt/f1tenth_deform_bridge_src
+    DEFORM /opt/DEFORM_src
+
+%post
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get -o APT::Sandbox::User=root update
+    # Under a single-uid user namespace dpkg cannot chown files to other users,
+    # so packages that do (man-db, bsdmainutils; pulled in only by x11-apps)
+    # are left out.  x11-apps was a debugging convenience in the Dockerfile.
+    apt-get -o APT::Sandbox::User=root install -y --no-install-recommends \
+        build-essential cmake coinor-libipopt-dev gfortran liblapack-dev libatlas-base-dev \
+        pkg-config swig python3-pip python3-scipy python3-tk python3-catkin-tools git vim wget curl \
+        ros-noetic-turtlebot3-msgs ros-noetic-gazebo-ros-pkgs ros-noetic-gazebo-ros-control \
+        ros-noetic-map-server ros-noetic-xacro ros-noetic-robot-state-publisher \
+        x11-utils libgl1-mesa-glx libgl1-mesa-dri libxrender1 libxext6 libxau6 mesa-utils
+    # TurtleBot3 simulation packages for the native (Gazebo) mode -- not fatal if absent
+    apt-get -o APT::Sandbox::User=root install -y --no-install-recommends \
+        ros-noetic-turtlebot3-description ros-noetic-turtlebot3-gazebo ros-noetic-turtlebot3-bringup \
+        || echo "[def] turtlebot3 simulation packages not available from apt"
+    rm -rf /var/lib/apt/lists/*
+
+    # CasADi 3.7.0 with IPOPT + Python bindings (same as the Dockerfile)
+    git clone --depth 1 --branch 3.7.0 https://github.com/casadi/casadi.git /tmp/casadi
+    cd /tmp/casadi && mkdir build && cd build
+    cmake -DWITH_PYTHON=ON -DWITH_PYTHON3=ON -DWITH_IPOPT=ON -DWITH_OPENMP=ON -DWITH_THREAD=ON \
+          -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=/usr/bin/python3 ..
+    make -j$(nproc)
+    make install
+    ldconfig
+    cd / && rm -rf /tmp/casadi
+
+    pip3 install --no-cache-dir "pot==0.9.3"
+    pip3 install --upgrade pip
+    pip3 install --no-cache-dir "numpy>=1.18,<2.0" "gymnasium>=0.29.1,<1.0" "pygame>=2.5.2" \
+        "numba>=0.55.2" "shapely>=2.0.2" "Pillow>=9.0.1" "opencv-python-headless>=4.9.0" \
+        "PyYAML>=5.3.1" "scipy>=1.7.3" "requests>=2.31.0" "yamldataclassconfig==1.5.0" "dataclasses-json==0.6.7" "marshmallow==3.22.0"
+
+    cp -r /opt/DEFORM_src /root/DEFORM && rm -rf /root/DEFORM/.git
+    # F1Tenth: raise the TurtleBot NMPC limits (identical sed patches to the Dockerfile)
+    H=/root/DEFORM/src/control/traj_opti/include/traj_opti/traj_opti.h
+    sed -i 's/#define MAX_LINEAR_VELOCITY     0.22/#define MAX_LINEAR_VELOCITY     3.0/' $H
+    sed -i 's/#define MAX_ANGULAR_VELOCITY    2.0/#define MAX_ANGULAR_VELOCITY    2.5/' $H
+    sed -i 's/#define MAX_DELTA_VELOCITY    1.7/#define MAX_DELTA_VELOCITY      3.0/' $H
+
+    cp -r /opt/f1tenth_deform_bridge_src /root/DEFORM/src/utility/f1tenth_deform_bridge
+    /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/DEFORM && \
+        catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release"
+
+    # Apptainer runs the container as the calling user: /root must be readable
+    chmod -R a+rX /root
+    mkdir -p /tmp/deform_results && chmod 1777 /tmp/deform_results
+
+%environment
+    export PYTHONPATH=/opt/f1tenth_gym:$PYTHONPATH
+    export QT_X11_NO_MITSHM=1
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export TURTLEBOT3_MODEL=burger
+    export ROS_HOME=/tmp/ros_home
+
+%runscript
+    exec /ros_entrypoint.sh "$@"

@@ -1,0 +1,57 @@
+scenario: all
+# All positions and dimensions in map frame (metres).
+
+toll_pillars:
+  - center_m: [1.22647, 19.71495]
+    depth_m: 6.65281
+    width_m: 0.22176
+    angle_deg: 159.856
+
+narrow_regions:
+  - center_m: [-34.68089, 14.57497]
+    gap_width_m: 3.10464
+    block_width_m: 2.88288
+    block_length_m: 17.74083
+    angle_deg: -86.194
+
+obstacles:
+  - type: rect
+    center_m: [-30.28807, 34.93367]
+    width_m: 2.31207
+    height_m: 2.5671
+    angle_deg: 80.534
+  - type: rect
+    center_m: [-42.48817, -10.4608]
+    width_m: 1.71221
+    height_m: 1.52992
+    angle_deg: 74.586
+  - type: rect
+    center_m: [-36.31576, 27.43095]
+    width_m: 2.07634
+    height_m: 1.6224
+    angle_deg: 5.72
+  - type: rect
+    center_m: [-19.26749, -10.47116]
+    width_m: 2.24133
+    height_m: 2.09852
+    angle_deg: 79.849
+  - type: rect
+    center_m: [-5.17959, -24.95706]
+    width_m: 2.21605
+    height_m: 2.28968
+    angle_deg: 50.515
+  - type: rect
+    center_m: [20.92427, 1.40934]
+    width_m: 1.92022
+    height_m: 1.77253
+    angle_deg: 2.288
+  - type: rect
+    center_m: [-39.71375, -12.96771]
+    width_m: 1.35917
+    height_m: 2.55202
+    angle_deg: 72.731
+  - type: rect
+    center_m: [31.54851, 4.61858]
+    width_m: 2.36219
+    height_m: 2.4999
+    angle_deg: 28.62

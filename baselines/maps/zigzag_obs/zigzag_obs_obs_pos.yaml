@@ -1,0 +1,55 @@
+scenario: sw_zigzag001
+base_map: mf_zigzag
+toll_pillars: []
+obstacles:
+- kind: tri
+  family: corner
+  placement: wall
+  center_m: [65.1101, 6.022]
+  size_m: [1.1999, 1.0953]
+  angle_deg: 111.64
+  s_m: 92.72
+  curv: 0.1421
+- kind: disc
+  family: corner
+  placement: wall
+  center_m: [142.8552, -6.2099]
+  size_m: [1.1441, 1.5608]
+  angle_deg: 89.54
+  s_m: 193.52
+  curv: 0.1419
+- kind: rect
+  family: corner
+  placement: wall
+  center_m: [69.7262, 12.731]
+  size_m: [1.0805, 1.5283]
+  angle_deg: 128.01
+  s_m: 95.74
+  curv: 0.1026
+- kind: tri
+  family: centre
+  placement: wall
+  center_m: [134.4711, 0.5459]
+  size_m: [0.6609, 1.5206]
+  angle_deg: 166.94
+  s_m: 179.41
+  curv: 0.0075
+- kind: tri
+  family: centre
+  placement: wall
+  center_m: [131.6412, -7.3987]
+  size_m: [1.7091, 1.8737]
+  angle_deg: 172.3
+  s_m: 183.44
+  curv: 0.0238
+- kind: rect
+  family: centre
+  placement: wall
+  center_m: [57.9621, 1.4418]
+  size_m: [1.8617, 1.7459]
+  angle_deg: 148.03
+  s_m: 80.62
+  curv: 0.0169
+narrow_regions:
+- center_m: [134.25138262594027, -4.913998771509961]
+  gap_width_m: 7.062

@@ -1,0 +1,18 @@
+scenario: toll
+# All positions and dimensions in map frame (metres).
+
+toll_pillars:
+  - center_m: [11.73122, 15.51953]
+    depth_m: 12.19682
+    width_m: 0.22176
+    angle_deg: 159.856
+  - center_m: [11.73122, 15.51953]
+    depth_m: 12.19682
+    width_m: 0.22176
+    angle_deg: 159.856
+
+narrow_regions:
+  []
+
+obstacles:
+  []

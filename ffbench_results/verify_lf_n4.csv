@@ -1,0 +1,2 @@
+baseline,sim,map,n_agents,dynamics,target_speed,trials,avg_speed_mps,success,time_to_goal_s,flow_rate,deformability,n_completed,n_collided,safety_rate,collision,spread_at_entry_m,spread_at_narrow_m,steps,sim_time_s,wall_time_s
+leader_follower,f1tenth,standard_ON,4,st,5.0,5,3.299,1.0,7.894,0.1589,nan,4.0,0.0,1.0,0.0,0.0,0.0,790.4,7.904,3.874

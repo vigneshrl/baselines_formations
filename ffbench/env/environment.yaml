@@ -1,0 +1,35 @@
+# Minimal environment for ffbench (ORCA, leader-follower, NMPC, map generation,
+# f1tenth_gym plant).  Versions are the ones the reference machine was verified
+# with.  torch / stable-baselines3 (needed only by the LAS baseline and the
+# FastFunnels training code) are in environment-full.yaml.
+#
+#   conda env create -f ffbench/env/environment.yaml
+#   conda activate ffbench
+#   pip install --no-deps -e ./f1tenth_gym          # the vendored gym (its pyproject pins an older gymnasium)
+#   (cd baselines/Python-RVO2 && python setup.py build)
+# or simply: bash ffbench/env/setup.sh
+name: ffbench
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - cmake
+  - cxx-compiler
+  - pip:
+      - numpy==2.0.2
+      - scipy==1.13.1
+      - shapely==2.0.7
+      - PyYAML==6.0.3
+      - pillow==11.3.0
+      - opencv-python==4.13.0.92
+      - matplotlib==3.9.4
+      - casadi==3.7.2
+      - gymnasium==1.1.1
+      - pygame==2.6.1
+      - PyQt6==6.10.2
+      - pyqtgraph==0.13.7
+      - numba==0.60.0
+      - requests
+      - yamldataclassconfig
+      - cython

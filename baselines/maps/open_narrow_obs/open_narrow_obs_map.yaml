@@ -1,0 +1,6 @@
+image: open_narrow_obs_map.pgm
+resolution: 0.0625
+origin: [-19.032158057643713, -91.31977258498635, 0.0]
+negate: 0
+occupied_thresh: 0.45
+free_thresh: 0.196
