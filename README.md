@@ -72,7 +72,6 @@ follower clips the wall-hugging triangle at the funnel mouth.
 <p align="center">
   <img src="ffbench_results/full_fastfunnels_n1_f1tenth_t0.gif" width="32%" alt="FastFunnels, full course"/>
   <img src="ffbench_results/full_nmpc_n4_f1tenth_t0.gif" width="32%" alt="NMPC, full course"/>
-  <img src="ffbench_results/full_fastfunnels_n1_traces.png" width="32%" alt="FastFunnels trajectories"/>
 </p>
 
 ```bash
