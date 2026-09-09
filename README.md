@@ -53,9 +53,9 @@ the trajectories.
 | **FastFunnels** (ours: patch + NMPC follower) | f1tenth_gym | native | 1.0 (N=1, full course) | 7.1 | 7.3 |
 | DEFORM | Gazebo + TurtleBot3 | via ROS bridge | 0.0 / 0.0 | 0.03 / 0.09 | – | creeps at cm/s in the corridor; container run |
 
-<p align="center">
+<!-- <p align="center">
   <img src="ffbench_results/verify_orca_n4_traces.png" width="100%" alt="ORCA trajectories, both backends"/>
-</p>
+</p> -->
 
 ### Start line to finish line
 
