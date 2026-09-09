@@ -36,9 +36,9 @@ around the pinch is scored:
 | `deform` | lateral spread at entry / tightest spread inside (≥ 2 agents) |
 | `aSR` | fraction of agents that cleared |
 
-## Results this repo reproduces
+## Results for Full course runs
 
-Verified 2026-09-08, three independent runs each (5 jittered trials per run, 4
+Three independent runs each (5 jittered trials per run, 4
 agents, 5 m/s target, single-track plant; DEFORM: 3 bridge + 3 native container trials). `ffbench_results/verify_all.csv`
 and `verify_repeats.csv` hold the rows; `ffbench_results/verify_*_traces.png`
 the trajectories.
