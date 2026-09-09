@@ -69,10 +69,18 @@ completes the course: 20.4 s start to finish, 7.1 m/s through the narrow
 section (`ffbench_results/full_all.csv`). With 2 or 4 followers the inside-slot
 follower clips the wall-hugging triangle at the funnel mouth.
 
-<p align="center">
-  <img src="ffbench_results/full_fastfunnels_n1_f1tenth_t0.gif" width="32%" alt="FastFunnels, full course"/>
-  <img src="ffbench_results/full_nmpc_n4_f1tenth_t0.gif" width="32%" alt="NMPC, full course"/>
-</p>
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="ffbench_results/full_fastfunnels_n1_f1tenth_t0.gif" width="100%" alt="FastFunnels, full course"/><br/>
+      <sub><b>FastFunnels:</b> Full course performance.</sub>
+    </td>
+    <td align="center">
+      <img src="ffbench_results/full_nmpc_n4_f1tenth_t0.gif" width="100%" alt="NMPC, full course"/><br/>
+      <sub><b>NMPC:</b> Full course performance.</sub>
+    </td>
+  </tr>
+</table>
 
 ```bash
 python run_experiment.py --fastfunnels --num_agents 1 --map standard_ON --course full --record   # needs FASTFUNNELS_ROOT
