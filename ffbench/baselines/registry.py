@@ -55,6 +55,11 @@ def _nmpc_ctrl(opts):
     return NMPCController(cfg)
 
 
+def _fastfunnels(req, mode):
+    from ffbench.baselines.fastfunnels import run_fastfunnels
+    return run_fastfunnels(req, mode)
+
+
 def _deform(req, mode):
     from ffbench.baselines.deform import run_deform
     return run_deform(req, mode)
@@ -83,6 +88,10 @@ REGISTRY: Dict[str, BaselineSpec] = {
         "nmpc", "Decentralised NMPC per agent (own lane, corridor + neighbour constraints, no funnel)",
         controller=_nmpc_ctrl, control_hz=20.0,
         native_note="its native simulator is f1tenth_gym"),
+    "fastfunnels": BaselineSpec(
+        "fastfunnels", "Ours: frozen patch (funnel) policy + trained follower policies (JointEnv)",
+        external=_fastfunnels,
+        native_note="f1tenth_gym is its native simulator; needs FASTFUNNELS_ROOT (training code + models)"),
     "deform": BaselineSpec(
         "deform", "DEFORM formation planner (NeSC-IV), ROS Noetic in Docker",
         external=_deform, agent_counts=None,
@@ -97,7 +106,7 @@ REGISTRY: Dict[str, BaselineSpec] = {
         native_note="its own f110-multi-agent gym on the open_narrow_obs override"),
 }
 
-ALIASES = {"lf": "leader_follower", "mpc": "nmpc", "dmpc": "nmpc", "gcbfplus": "gcbf",
+ALIASES = {"ours": "fastfunnels", "ff": "fastfunnels", "lf": "leader_follower", "mpc": "nmpc", "dmpc": "nmpc", "gcbfplus": "gcbf",
            "gcbf+": "gcbf"}
 
 

@@ -1,5 +1,8 @@
 # Apptainer/Singularity equivalent of baselines/deform_docker/Dockerfile.
-# Build from the repo root (run `git submodule update --init DEFORM` first):
+# Build from the repo root after staging clean copies (no __pycache__, which may
+# hold unreadable temp files):
+#     rsync -a --exclude __pycache__ --exclude .git f1tenth_gym/ ffbench_generated/build_ctx/f1tenth_gym/
+#     rsync -a --exclude __pycache__ baselines/deform_docker/f1tenth_deform_bridge/ ffbench_generated/build_ctx/f1tenth_deform_bridge/
 #     apptainer build --fakeroot --ignore-fakeroot-command ffbench_generated/deform_ros.sif ffbench/ros/deform_ros.def
 # (--ignore-fakeroot-command: user-namespace mode; the host fakeroot helper is
 #  too new for the Ubuntu 20.04 base and apt only needs uid 0 mapped)
@@ -9,9 +12,8 @@ Bootstrap: docker
 From: osrf/ros:noetic-desktop-full
 
 %files
-    f1tenth_gym /opt/f1tenth_gym
-    baselines/deform_docker/f1tenth_deform_bridge /opt/f1tenth_deform_bridge_src
-    DEFORM /opt/DEFORM_src
+    ffbench_generated/build_ctx/f1tenth_gym /opt/f1tenth_gym
+    ffbench_generated/build_ctx/f1tenth_deform_bridge /opt/f1tenth_deform_bridge_src
 
 %post
     set -e
@@ -48,7 +50,7 @@ From: osrf/ros:noetic-desktop-full
         "numba>=0.55.2" "shapely>=2.0.2" "Pillow>=9.0.1" "opencv-python-headless>=4.9.0" \
         "PyYAML>=5.3.1" "scipy>=1.7.3" "requests>=2.31.0" "yamldataclassconfig==1.5.0" "dataclasses-json==0.6.7" "marshmallow==3.22.0"
 
-    cp -r /opt/DEFORM_src /root/DEFORM && rm -rf /root/DEFORM/.git
+    git clone https://github.com/NeSC-IV/DEFORM.git /root/DEFORM
     # F1Tenth: raise the TurtleBot NMPC limits (identical sed patches to the Dockerfile)
     H=/root/DEFORM/src/control/traj_opti/include/traj_opti/traj_opti.h
     sed -i 's/#define MAX_LINEAR_VELOCITY     0.22/#define MAX_LINEAR_VELOCITY     3.0/' $H

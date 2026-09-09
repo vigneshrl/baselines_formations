@@ -35,14 +35,14 @@ def _draw_map(ax, src: MapSource, ref):
         ax.fill(hx, hy, color="#666", zorder=1)
     # zone entry / exit lines across the corridor
     t, n = ref.tangent, np.array([-ref.tangent[1], ref.tangent[0]])
-    for k, label in ((ref.narrow_idx - ref.zone_half_wp, "zone entry"),
-                     (ref.narrow_idx + ref.zone_half_wp, "zone exit")):
+    ze = ref.zone_entry_idx if ref.zone_entry_idx is not None else ref.narrow_idx - ref.zone_half_wp
+    zx = ref.zone_exit_idx if ref.zone_exit_idx is not None else ref.narrow_idx + ref.zone_half_wp
+    for k, label in ((ze, "zone entry"), (zx, "zone exit")):
         c = np.array([ref.xs[k], ref.ys[k]])
         a, b = c - n * 8, c + n * 8
         ax.plot([a[0], b[0]], [a[1], b[1]], "--", color="#2a9d8f", lw=1, zorder=2)
         ax.annotate(label, c + n * 8, fontsize=7, color="#2a9d8f")
-    ax.plot(ref.xs[ref.idx0:ref.narrow_idx + ref.zone_half_wp + 5],
-            ref.ys[ref.idx0:ref.narrow_idx + ref.zone_half_wp + 5], ":", color="#999", lw=0.8, zorder=2)
+    ax.plot(ref.xs[ref.idx0:zx + 5], ref.ys[ref.idx0:zx + 5], ":", color="#999", lw=0.8, zorder=2)
 
 
 def main(argv=None):
@@ -74,7 +74,8 @@ def main(argv=None):
         if mp not in cache:
             src = MapSource.load(resolve(mp)[0][1])
             n = int(rows[0]["n_agents"])
-            ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(), "abreast")
+            course = rows[0].get("course", "zone")
+            ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(course=course), "abreast")
             cache[mp] = (src, ref)
         src, ref = cache[mp]
         _draw_map(ax, src, ref)

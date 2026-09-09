@@ -23,17 +23,20 @@ from ffbench.maps.source import MapSource
 
 def animate(trace: np.ndarray, map_label: str, row: dict, out: str, fps: int = 20,
             sim_dt: float = 0.05, radius_m: float = 0.25, margin: float = 6.0) -> str:
+    course = row.get("course", "zone")
     import imageio.v2 as imageio
 
     src = MapSource.load(resolve(map_label)[0][1])
     n = trace.shape[1]
-    ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(), "abreast")
+    ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(course=course), "abreast")
     fig, ax = plt.subplots(figsize=(5, 7))
     _draw_map(ax, src, ref)
     cx, cy = src.narrow_xy
     pts = trace.reshape(-1, 2)
     ax.set_xlim(min(pts[:, 0].min(), cx - margin) - 2, max(pts[:, 0].max(), cx + margin) + 2)
     ax.set_ylim(min(pts[:, 1].min(), cy - 16) - 2, max(pts[:, 1].max(), cy + 16) + 2)
+    if course == "full":
+        ax.set_xlim(pts[:, 0].min() - 3, pts[:, 0].max() + 3)
     ax.set_aspect("equal")
     ax.set_title(f"{row.get('baseline', '')} | {row.get('sim', '')} | {map_label}", fontsize=9)
     trails = [ax.plot([], [], color=COLORS[i % len(COLORS)], lw=1.2, alpha=0.7)[0] for i in range(n)]

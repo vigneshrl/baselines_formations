@@ -22,7 +22,13 @@ from ffbench.maps.source import MapSource
 
 @dataclass
 class Protocol:
-    spawn: str = "zone_entry"          # zone_entry | track_start
+    course: str = "zone"               # zone: spawn before the pinch, score the pinch window
+                                       # full: spawn at the track start, score the whole narrow section + start-to-finish
+    spawn: str = "zone_entry"          # zone_entry | track_start (forced by course=full)
+    narrow_width_factor: float = 1.3   # full course: a waypoint is "narrow" while corridor width < factor * gap
+    lateral_gap_full: float = 1.0      # full course: rank spacing at the 9 m wide start line (0.6 m makes cars touch in the bend)
+    finish_clearance_m: float = 0.6    # full course: finish = last waypoint with this much wall clearance
+    goal_buffer_m: float = 1.5         # an agent has finished once within this distance of the finish line
     formation: str = "auto"            # auto (baseline's own) | abreast | column
     lateral_gap: float = 0.6           # abreast spacing, metres (unscaled)
     column_gap: float = 2.0            # column spacing, metres (unscaled)
@@ -68,6 +74,10 @@ class Reference:
     track_closed: bool = False
     goal_xy: Optional[Tuple[float, float]] = None
     arclength: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    zone_entry_idx: Optional[int] = None      # explicit zone bounds (full course); else narrow_idx +- zone_half_wp
+    zone_exit_idx: Optional[int] = None
+    course: str = "zone"
+    goal_buffer_wp: int = 3                   # waypoints before the last one that count as "finished"
 
     @property
     def n(self) -> int:
@@ -178,6 +188,8 @@ def build_reference(src: MapSource, xs: np.ndarray, ys: np.ndarray, n: int,
     xs = np.asarray(xs, dtype=np.float32)
     ys = np.asarray(ys, dtype=np.float32)
     closed = _is_closed(xs, ys)
+    if proto.course == "full":
+        return _build_full_course(src, xs, ys, n, proto, formation, seed)
     if proto.spawn == "zone_entry":
         xs_e, ys_e, ins_at, spawn_idx, narrow_idx, t, spacing = splice_approach(xs, ys, src, proto)
         heading = math.atan2(float(t[1]), float(t[0]))
@@ -229,3 +241,86 @@ def build_reference(src: MapSource, xs: np.ndarray, ys: np.ndarray, n: int,
     return Reference(xs_e, ys_e, int(idx0), int(narrow_idx), poses, heading, t,
                      src.narrow_xy, src.gap_width_m, zone_half_wp, offsets, closed,
                      goal, arclength)
+
+
+def _walk_forward(xs, ys, s_target: float):
+    """Index of the first waypoint at or past arclength ``s_target``."""
+    seg = np.hypot(np.diff(xs), np.diff(ys))
+    arc = np.concatenate([[0.0], np.cumsum(seg)])
+    return int(min(len(xs) - 1, np.searchsorted(arc, s_target)))
+
+
+def _build_full_course(src: MapSource, xs, ys, n: int, proto: Protocol, formation: str,
+                       seed: Optional[int]) -> Reference:
+    """Start line -> finish line.  The pinch splice is kept (the stock
+    centreline runs inside a wall there); the scored zone is the whole
+    narrow section, i.e. every consecutive waypoint around the pinch whose
+    corridor width is below ``narrow_width_factor`` x gap."""
+    xs_e, ys_e, ins_at, spawn_idx, narrow_idx, t_pinch, spacing = splice_approach(xs, ys, src, proto)
+    # cut the reference at the finish line: the gym's resampled centreline loops
+    # back to the start, and a car spawned just behind the start line would
+    # otherwise be "nearest" to a waypoint past the finish
+    gx, gy = float(src.centerline[-1, 0]), float(src.centerline[-1, 1])
+    fin = int(np.argmin(np.hypot(xs_e - gx, ys_e - gy)))
+    # the map's last waypoints run past the walls: the finish line is the last
+    # waypoint that still has a car's worth of clearance inside the corridor
+    from shapely.geometry import Point
+    poly = src.corridor()
+    while fin > 0:
+        pt = Point(float(xs_e[fin]), float(ys_e[fin]))
+        if poly.contains(pt) and poly.boundary.distance(pt) >= proto.finish_clearance_m:
+            break
+        fin -= 1
+    xs_e, ys_e = xs_e[: fin + 1], ys_e[: fin + 1]
+    nwp = len(xs_e)
+    # local tangents
+    tx = np.gradient(xs_e.astype(float)); ty = np.gradient(ys_e.astype(float))
+    nrm_ = np.maximum(np.hypot(tx, ty), 1e-9); tx, ty = tx / nrm_, ty / nrm_
+    # corridor width at every waypoint (0 outside the corridor)
+    widths = np.zeros(nwp)
+    for i in range(nwp):
+        l, r = src.lateral_extent(float(xs_e[i]), float(ys_e[i]), (tx[i], ty[i]))
+        widths[i] = l + r
+    narrow = (widths > 0) & (widths < proto.narrow_width_factor * src.gap_width_m)
+    lo = hi = narrow_idx
+    while lo > 0 and narrow[lo - 1]:
+        lo -= 1
+    while hi < nwp - 1 and narrow[hi + 1]:
+        hi += 1
+    # spawn: rank (or column) just past the start line, facing along the track
+    lead_s = 1.0 + ((n - 1) * proto.column_gap if formation == "column" else 0.0)
+    idx0 = _walk_forward(xs_e, ys_e, lead_s)
+    t = np.array([tx[idx0], ty[idx0]]); nrm = np.array([-t[1], t[0]])
+    heading = math.atan2(float(t[1]), float(t[0]))
+    base = np.array([xs_e[idx0], ys_e[idx0]], dtype=float)
+    half = (n - 1) / 2.0
+    base = base + nrm * _rank_shift(src, base, t, nrm, n, proto, formation)
+    poses = np.zeros((n, 3), dtype=np.float32)
+    offsets = []
+    if formation == "column":
+        col = _walk_back(xs_e, ys_e, idx0, [i * proto.column_gap for i in range(n)])
+        for i in range(n):
+            poses[i] = col[i]; offsets.append(0.0)
+    else:
+        gap = proto.lateral_gap_full
+        for i in range(n):
+            off = (i - half) * gap
+            p = base + nrm * off
+            offsets.append(float(off)); poses[i] = [p[0], p[1], heading]
+    if seed is not None and (proto.spawn_jitter_m > 0 or proto.spawn_jitter_rad > 0):
+        rng = np.random.default_rng(seed)
+        along = rng.uniform(-proto.spawn_jitter_m, proto.spawn_jitter_m, size=n)
+        poses[:, 0] += (along * t[0]).astype(np.float32); poses[:, 1] += (along * t[1]).astype(np.float32)
+        poses[:, 2] += rng.uniform(-proto.spawn_jitter_rad, proto.spawn_jitter_rad, size=n).astype(np.float32)
+    seg = np.hypot(np.diff(xs_e), np.diff(ys_e))
+    arclength = np.concatenate([[0.0], np.cumsum(seg)])
+    # finish line = the end of the map's own centreline (the gym's resampled
+    # centreline may loop back to the start, so never use its last waypoint)
+    goal = (float(xs_e[-1]), float(ys_e[-1]))
+    end_spacing = float(np.mean(seg[-40:])) if len(seg) >= 40 else float(np.mean(seg))
+    goal_buffer_wp = max(1, int(round(proto.goal_buffer_m / max(end_spacing, 1e-6))))
+    return Reference(xs_e, ys_e, int(idx0), int(narrow_idx), poses, heading, t_pinch,
+                     src.narrow_xy, src.gap_width_m, int(max(hi - narrow_idx, narrow_idx - lo, 1)),
+                     offsets, False, goal, arclength,
+                     zone_entry_idx=int(lo), zone_exit_idx=int(hi), course="full",
+                     goal_buffer_wp=goal_buffer_wp)

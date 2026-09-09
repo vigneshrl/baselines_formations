@@ -50,11 +50,35 @@ the trajectories.
 | NMPC (decentralised, no leader) | f1tenth_gym | yes | – / 1.0 | 4.3 | 4.9 |
 | GCBF+ (pretrained) | PyRoboSim + JAX | cross-over | 3 of 4 agents / 2 of 4 agents | 0.7 / 0.6 | – |
 | LAS (CBF-PPO, 3 agents) | its own f1tenth gym | same | 0.2 | 0.74 | 14.3 |
+| **FastFunnels** (ours: patch + NMPC follower) | f1tenth_gym | native | 1.0 (N=1, full course) | 7.1 | 7.3 |
 | DEFORM | Gazebo + TurtleBot3 | via ROS bridge | 0.0 / 0.0 | 0.03 / 0.09 | – | creeps at cm/s in the corridor; container run |
 
 <p align="center">
   <img src="ffbench_results/verify_orca_n4_traces.png" width="100%" alt="ORCA trajectories, both backends"/>
 </p>
+
+### Start line to finish line
+
+`--course full` runs the whole 120 m track: the 9 m wide approach, the bend,
+the 51 m narrow section and the end box. At 4 agents no baseline finishes:
+ORCA gets 2-3 cars through and loses one at the funnel-mouth disc, the
+patch-free NMPC clears the narrow section in 11-13 s when it does not spin at
+the start, the convoy rear-ends itself in the bend, DEFORM's planner cannot
+handle a 120 m goal. FastFunnels with one follower is the only run that
+completes the course: 20.4 s start to finish, 7.1 m/s through the narrow
+section (`ffbench_results/full_all.csv`). With 2 or 4 followers the inside-slot
+follower clips the wall-hugging triangle at the funnel mouth.
+
+<p align="center">
+  <img src="ffbench_results/full_fastfunnels_n1_f1tenth_t0.gif" width="32%" alt="FastFunnels, full course"/>
+  <img src="ffbench_results/full_nmpc_n4_f1tenth_t0.gif" width="32%" alt="NMPC, full course"/>
+  <img src="ffbench_results/full_fastfunnels_n1_traces.png" width="32%" alt="FastFunnels trajectories"/>
+</p>
+
+```bash
+python run_experiment.py --fastfunnels --num_agents 1 --map standard_ON --course full --record   # needs FASTFUNNELS_ROOT
+python run_experiment.py --nmpc --num_agents 4 --map standard_ON --course full --spawn_jitter 0.1 --record
+```
 
 ## Install
 

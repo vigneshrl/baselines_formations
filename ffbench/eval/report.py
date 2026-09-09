@@ -10,10 +10,10 @@ from typing import Dict, List
 
 from ffbench.eval.metrics import METRIC_KEYS
 
-GROUP_KEYS = ("baseline", "sim", "map", "n_agents", "dynamics", "target_speed")
+GROUP_KEYS = ("baseline", "sim", "map", "course", "n_agents", "dynamics", "target_speed")
 NUMERIC = ("avg_speed_mps", "success", "time_to_goal_s", "flow_rate", "deformability",
            "n_completed", "n_collided", "safety_rate", "collision", "spread_at_entry_m",
-           "spread_at_narrow_m", "steps", "sim_time_s", "wall_time_s")
+           "spread_at_narrow_m", "finished", "t_course_s", "v_course_mps", "steps", "sim_time_s", "wall_time_s")
 
 
 def _f(v):
@@ -88,15 +88,16 @@ def write_csv(aggs: List[dict], path) -> pathlib.Path:
 
 
 def format_table(aggs: List[dict]) -> str:
-    cols = [("baseline", 16), ("sim", 8), ("map", 13), ("n_agents", 4), ("dynamics", 5),
-            ("target_speed", 6), ("trials", 6), ("avg_speed_mps", 8), ("success", 8),
-            ("time_to_goal_s", 9), ("flow_rate", 8), ("deformability", 8),
-            ("safety_rate", 8), ("n_collided", 8)]
+    cols = [("baseline", 16), ("sim", 8), ("map", 12), ("course", 5), ("n_agents", 3), ("dynamics", 5),
+            ("target_speed", 6), ("trials", 6), ("avg_speed_mps", 7), ("success", 6),
+            ("time_to_goal_s", 8), ("flow_rate", 7), ("deformability", 7),
+            ("safety_rate", 6), ("n_collided", 6), ("finished", 7), ("t_course_s", 8), ("v_course_mps", 7)]
     head = {"baseline": "baseline", "sim": "sim", "map": "map", "n_agents": "N",
             "dynamics": "dyn", "target_speed": "v_tgt", "trials": "trials",
             "avg_speed_mps": "V_bar", "success": "eSR", "time_to_goal_s": "T_zone",
             "flow_rate": "flow", "deformability": "deform", "safety_rate": "aSR",
-            "n_collided": "n_coll"}
+            "n_collided": "n_coll", "course": "crs", "finished": "finish", "t_course_s": "T_course",
+            "v_course_mps": "V_course"}
 
     def fmt(v):
         if isinstance(v, float):

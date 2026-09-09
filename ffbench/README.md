@@ -52,34 +52,46 @@ export FFBENCH_PY_GCBF=$(conda run -n ffbench-gcbf python -c 'import sys;print(s
 `--gcbf` then re-launches the GCBF+ runner under that interpreter. Without the
 variable it runs under the current one and fails on the JAX import.
 
-### 1.3 ROS / Gazebo (DEFORM) — container
+### 1.3 ROS / Gazebo (DEFORM) — Docker
 
-Everything ROS lives in a ROS Noetic container (Gazebo 11, CasADi/IPOPT, the
-DEFORM planner from the pinned `DEFORM/` submodule, the f1tenth bridge
-package, DEFORM's own TurtleBot3 + RealSense simulation). Build it once, from
-the repo root, after `git submodule update --init DEFORM`:
+Everything ROS lives in the container built from
+`baselines/deform_docker/Dockerfile` (ROS Noetic, Gazebo 11, CasADi/IPOPT, the
+DEFORM checkout, the f1tenth bridge package). Build it once on a Docker host:
 
 ```bash
-# Docker
-docker build -t deform_ros:latest -f baselines/deform_docker/Dockerfile .
-docker tag deform_ros:latest deform_ros:f1tenth_patched
+# the Dockerfile COPYs `f1tenth_gym/` and `deform_docker/` from the build context,
+# so stage them as siblings first (Docker does not follow symlinks out of the context)
+mkdir -p /tmp/deform_ctx && cp -r f1tenth_gym baselines/deform_docker /tmp/deform_ctx
+docker build -t deform_ros:latest -f /tmp/deform_ctx/deform_docker/Dockerfile /tmp/deform_ctx   # ~40 min, builds CasADi
+cd baselines/deform_docker && ./deform_run_condition.sh --agents 1 --trials 1   # first call commits deform_ros:f1tenth_patched
+```
+Note that `deform_run_condition.sh` still mounts host paths from the original
+author's machine (`/home/mrvik/...`) for the NMPC-limit patch; edit those two
+lines for your host before the first run.
 
-# Apptainer (HPC nodes, no root). The Ubuntu 20.04 base needs the
-# user-namespace fakeroot mode; the def disables apt's sandbox user for it.
-export APPTAINER_CACHEDIR=/big/disk/apptainer_cache APPTAINER_TMPDIR=/big/disk/apptainer_tmp
-apptainer build --fakeroot --ignore-fakeroot-command ffbench_generated/deform_ros.sif ffbench/ros/deform_ros.def
-bash ffbench/ros/smoke_test_sif.sh          # packages, CasADi, gym import, TurtleBot3 sim
+`run_experiment.py --deform` then drives `docker run` per trial itself.
+
+**No Docker (HPC nodes)?** The same container builds with Apptainer, without
+root, from `ffbench/ros/deform_ros.def` (a line-for-line translation of the
+Dockerfile plus the TurtleBot3 simulation packages for the native mode):
+
+```bash
+export APPTAINER_CACHEDIR=/some/big/disk/apptainer_cache APPTAINER_TMPDIR=/some/big/disk/apptainer_tmp
+# stage clean copies of the two directories the image needs (no __pycache__, no .git)
+rsync -a --exclude __pycache__ --exclude .git f1tenth_gym/ ffbench_generated/build_ctx/f1tenth_gym/
+rsync -a --exclude __pycache__ baselines/deform_docker/f1tenth_deform_bridge/ ffbench_generated/build_ctx/f1tenth_deform_bridge/
+apptainer build --fakeroot --ignore-fakeroot-command ffbench_generated/deform_ros.sif ffbench/ros/deform_ros.def   # ~30-60 min (CasADi from source)
+bash ffbench/ros/smoke_test_sif.sh                                        # checks packages, CasADi, gym import
+python run_experiment.py --deform --num_agents 4 --map standard_ON --sim f1tenth
 ```
 
-`run_experiment.py --deform` then drives one container per trial (Docker if
-present, else the SIF; `FFBENCH_DEFORM_SIF` to point elsewhere), each on its
-own ROS master port, and reads the CSV the episode writes. Without either
-runtime it generates the bundle and prints the command to run elsewhere.
+`--ignore-fakeroot-command` matters: the host's fakeroot helper is newer than
+the Ubuntu 20.04 base ROS Noetic needs, and the user-namespace mode is enough
+for apt once its sandbox user is disabled (the def does that).
 
-If your checkout of `f1tenth_gym/` contains Python cache files you cannot
-read (shared machines), stage a clean copy first:
-`rsync -a --exclude __pycache__ f1tenth_gym/ ffbench_generated/build_ctx/f1tenth_gym/`
-and point the `%files` line of the def at it.
+The driver picks Docker when present, else the SIF (`FFBENCH_DEFORM_SIF` to
+point elsewhere), binding the same directories. Without either it generates
+the bundle and prints the command to run elsewhere.
 
 ### 1.4 LAS (optional, separate env)
 
@@ -104,20 +116,27 @@ forks with `--no-deps`); `environment-las.yaml` documents it.
    `zigzag`, `slalom`), a layout split (`eval_matched[:N]`, `eval_heldout[:N]`),
    or a directory in the FastFunnels map format. `MapSource` loads the PGM,
    centreline and obstacle sidecar once and traces the corridor polygon.
-2. **Protocol** — N agents spawn in a rank 7 m before the pinch (the repo's
+2. **Course** — `--course zone` (default) spawns the rank 7 m before the pinch
+   and scores the 24 m window around it. `--course full` spawns at the start
+   line (1 m rank spacing, the corridor is 9 m wide there), scores the *whole
+   narrow section* (every waypoint whose corridor width is under 1.3 x the gap,
+   about 51 m on `standard_ON`) and adds start-to-finish columns: `finished`
+   (fraction of agents at the finish line), `T_course`, `V_course`. The finish
+   line is the last centreline waypoint with 0.6 m of wall clearance.
+3. **Protocol** — N agents spawn in a rank 7 m before the pinch (the repo's
    original convention, i.e. inside the scored zone), facing down the corridor;
    the convoy baseline spawns as a column along the track. The rank is only
    shifted sideways if a wall or obstacle is within 0.5 m (`--spawn_up_m` to change). A straight approach segment
    is spliced into the centreline through the zone. The scored zone is 12 m
    either side of the pinch.
-3. **Backend** — `--sim f1tenth` builds the f1tenth_gym env with the chosen
+4. **Backend** — `--sim f1tenth` builds the f1tenth_gym env with the chosen
    vehicle model and steps the baseline's controller through it; `--sim native`
    hands the same spawn and reference to the baseline's own simulator.
-4. **Metrics** — `baselines/eval_metrics.py::FullRunMetrics`, plus a
+5. **Metrics** — `baselines/eval_metrics.py::FullRunMetrics`, plus a
    `deformability_multi` column (tightest spread sampled only while ≥2 agents
    are in the zone). A trial ends when every agent has cleared the zone, the
    plant reports a collision, or `--max_steps` elapse.
-5. **Report** — JSONL rows, aggregated CSV (NaN-ignoring means; `inf` survives
+6. **Report** — JSONL rows, aggregated CSV (NaN-ignoring means; `inf` survives
    only when every trial timed out), printed table.
 
 ---
@@ -131,6 +150,7 @@ forks with `--no-deps`); `environment-las.yaml` documents it.
 | `--nmpc` | decentralised NMPC per agent (`ffbench/baselines/nmpc.py`): own-lane reference, corridor half-plane constraints from the traced polygon, hard slacked keep-out from the other agents, kinematic or single-track prediction model (`--controller_model st`), 20 Hz. No funnel, no leader. | its native simulator is f1tenth_gym |
 | `--deform` | DEFORM's planner driving the f1tenth plant through the ROS bridge (`--dynamics` is passed to the bridge). | Gazebo + TurtleBot3 on a world generated from the map, corridor rescaled by `robot_radius / 0.29` (`--robot_radius`, `--robot_model`). |
 | `--gcbf` | `gcbf_baseline.run_gcbf_f110` (Dubins yaw-rate/accel → steer/speed). | `gcbf_baseline.run_gcbf_eval` (PyRoboSim room + JAX policy). |
+| `--fastfunnels` (`--ours`) | the frozen patch (funnel) policy `patch_policy_models/run_20260518_151612/checkpoint_18510000` (legacy raw-action checkpoint, steering-rate shim applied) driving `JointEnv`, followers = the paper's decentralised NMPC (`envs/mpc.py`, wedge slots behind the patch car, `--follower nmpc`) or the N=1 RL checkpoint (`--follower rl`). Needs `FASTFUNNELS_ROOT` with the training code and models. | f1tenth_gym is its native simulator |
 | `--las` | `baselines/las_sweep.py`, fixed 3 agents on its own `open_narrow_obs` override; runs under `FFBENCH_PY_FASTFUNNELS` (the `ffbench-las` env). | same |
 
 `deform`, `gcbf` and `las` are *external*: they keep their own runner and
@@ -240,6 +260,38 @@ Things learned while verifying, all now built into the protocol:
 - The raw deformability metric returns NaN whenever the last agent exits
   alone; the reported column samples the tightest spread only while at least
   two agents are in the zone, floored at one car width.
+
+### Full course (start line to finish line)
+
+`--course full` spawns the rank at the start line and scores the whole 51 m
+narrow section plus start-to-finish. Verified 2026-09-08, 3 trials each, 4
+agents unless noted (`ffbench_results/full_all.csv`, plots
+`ffbench_results/full_*_traces.png`, videos `ffbench_results/full_*.mp4`):
+
+| baseline | N | narrow section cleared (aSR) | V in section (m/s) | T section (s) | finished | T course (s) | what happens |
+|---|---|---|---|---|---|---|---|
+| **fastfunnels** (patch + NMPC follower) | 1 | 1.0 | **7.07** | **7.3** | **1.0** | **20.4** | only run that completes the course, 3/3 |
+| fastfunnels | 2 / 4 | 0 | – | – | 0 | inf | the follower on the inside slot clips the wall-hugging triangle at the funnel mouth (the funnel ellipse overlaps it and the followers only see the funnel) |
+| orca | 4 | 0.42 | 2.0 | inf | 0.42 | inf | 2-3 cars get through and reach the end box; one is always pinned at the funnel-mouth disc |
+| orca (native RVO2) | 4 | 0.08 | 1.1 | inf | 0 | inf | discs freeze at the funnel corner |
+| nmpc (patch-free) | 4 | 0.33 | 1.7 | 13.5 | 0.17 | inf | when it does not spin at the start it clears the section 4/4 in 11-13 s, then hits the end-box wall |
+| leader_follower | 4 | 0 | – | – | 0 | inf | followers rear-end each other in the entry bend |
+| deform (ROS bridge) | 4 | 0 | 0 | – | – | – | its A* exhausts its node pool on a 120 m goal; robots never move (900 s) |
+
+Two full-course conventions worth knowing: the rank spacing at the 9 m wide
+start line is 1 m (0.6 m makes cars touch in the bend), and the finish is a
+line 1.5 m before the last centreline waypoint with 0.6 m of wall clearance,
+crossed anywhere across the corridor (the map's own last waypoints sit past
+the walls, and cars finish a few metres to the side of the centreline's end).
+
+The FastFunnels row uses the "working patch" checkpoint
+`patch_policy_models/run_20260518_151612/checkpoint_18510000` with the
+steering-rate integrator it was trained behind, and the paper's NMPC followers
+ported from `mpc_follower_native_n.py` (wedge slots, kinematic prediction,
+speed capped at the patch's 10 m/s instead of the script's 12 because the
+gym's single-track car cannot take the bend faster; a lower acceleration cap
+or the hard keep-out made IPOPT fail on every solve). Only an N=1 RL follower
+checkpoint exists (`--follower rl`).
 
 All six baselines now have at least three end-to-end confirmations on the
 reference machine; DEFORM's ran in the Apptainer build of the ROS container

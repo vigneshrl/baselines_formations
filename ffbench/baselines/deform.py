@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import csv
 import glob
+import math
 import os
 import re
 import pathlib
@@ -70,11 +71,18 @@ def prepare_bundle(req, mode: str) -> pathlib.Path:
         collision_thresh = proto.collision_thresh
     ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], req.n, proto, "abreast")
     poses = [(float(x), float(y), float(th)) for x, y, th in ref.spawn_poses]
-    goal = (ref.goal_xy[0], ref.goal_xy[1], ref.heading)
+    full = proto.course == "full"
+    if full:
+        gx, gy = float(src.centerline[-1, 0]), float(src.centerline[-1, 1])
+        tg = src.tangent(len(src.centerline) - 1)
+        goal = (gx, gy, math.atan2(tg[1], tg[0]))
+    else:
+        goal = (ref.goal_xy[0], ref.goal_xy[1], ref.heading)
     out = pathlib.Path(req.options.get("out_dir") or GENERATED) / "ros"
     return write_ros(
         src, out, n_agents=req.n, poses=poses, goal=goal,
-        end_mode="narrow_clear", timeout_s=float(req.options.get("timeout_s") or (600.0 if mode == "native" else 300.0)),
+        end_mode="map_goal" if full else "narrow_clear",
+        timeout_s=float(req.options.get("timeout_s") or (900.0 if full else (600.0 if mode == "native" else 300.0))),
         robot_model=robot if mode == "native" else "burger",
         formation_spacing=proto.lateral_gap, dynamics=req.dynamics,
         zone_half_wp=ref.zone_half_wp, ref_centerline=list(zip(ref.xs.tolist(), ref.ys.tolist())),
@@ -165,7 +173,8 @@ def run_deform(req, mode: str) -> List[dict]:
     bundle = prepare_bundle(req, mode)
     results = bundle / "results"
     results.mkdir(exist_ok=True)
-    timeout_s = float(req.options.get("timeout_s") or (600.0 if mode == "native" else 300.0))
+    full = req.proto.course == "full"
+    timeout_s = float(req.options.get("timeout_s") or (900.0 if full else (600.0 if mode == "native" else 300.0)))
     map_name = bundle.name.rsplit("_", 1)[0]
     rows: List[dict] = []
     if not runtime():
@@ -199,7 +208,7 @@ def run_deform(req, mode: str) -> List[dict]:
         for r in _read_rows(new):
             if ended:                      # bridge mode logs the reason; the metrics node writes it itself
                 r["terminated"] = ended
-            r.update({"baseline": "deform", "sim": mode, "map": req.map_label,
+            r.update({"baseline": "deform", "sim": mode, "map": req.map_label, "course": req.proto.course,
                       "n_agents": req.n, "dynamics": req.dynamics if mode == "f1tenth" else "turtlebot3",
                       "target_speed": float("nan"), "seed": req.proto.seed + t, "trial": t,
                       "wall_time_s": round(time.time() - t0, 1), "bundle": str(bundle)})

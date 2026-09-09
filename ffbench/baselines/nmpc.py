@@ -263,15 +263,9 @@ class LaneNMPC:
             self.prev_X, self.prev_U = sol.value(self.X), sol.value(self.U)
             return np.asarray(sol.value(self.U[:, 0])).ravel(), np.asarray(self.prev_X[:, 1]).ravel()
         except Exception:
-            try:
-                xs, us = o.debug.value(self.X), o.debug.value(self.U)
-                g = float(np.max(np.abs(o.debug.value(o.g))))
-                if np.all(np.isfinite(xs)) and np.all(np.isfinite(us)) and g < 1.5e-1:
-                    self.prev_X, self.prev_U = xs, us
-                    return np.asarray(us[:, 0]).ravel(), np.asarray(xs[:, 1]).ravel()
-            except Exception:
-                pass
-            self.prev_X = self.prev_U = None
+            # Do NOT accept IPOPT's last iterate: a near-feasible iterate can
+            # still be a spinning trajectory at full steering lock (seen on the
+            # full course).  The caller keeps executing the previous plan.
             return None, None
 
 
@@ -311,7 +305,9 @@ class NMPCController:
         ty = np.where(use_b, by, fy)
         nrm = np.maximum(np.hypot(tx, ty), 1e-9)
         self.tx, self.ty = tx / nrm, ty / nrm
-        self.s_min = float(self.s[ref.idx0])       # never reference behind the spawn
+        # never reference behind the spawn on the zone course (behind it lies the
+        # far-away original centreline); on the full course the path is contiguous
+        self.s_min = float(self.s[0] if getattr(ref, "course", "zone") == "full" else self.s[ref.idx0])
         # speed setpoint is read this many horizon steps ahead so the plant's
         # speed PID has something to chase (one step ahead makes the car crawl)
         self.k_cmd = int(min(cfg.horizon_steps, max(1, round(0.3 / (cfg.horizon_seconds / cfg.horizon_steps)))))
@@ -326,6 +322,7 @@ class NMPCController:
         self.hint = [ref.idx0] * self.n
         self.last_delta = np.zeros(self.n)
         self.last_action = np.zeros((self.n, 2), dtype=np.float32)
+        self.hold_k = [0] * self.n
         self.solvers = [LaneNMPC(cfg, self.n - 1) for _ in range(self.n)]
         self.st = self.solvers[0].st
         self.dt_ctrl = self.solvers[0].dt
@@ -389,9 +386,21 @@ class NMPCController:
                 x0 = [px[i], py[i], th[i], max(v_now, 0.0)]
             u0, x1 = self.solvers[i].solve(x0, lane, tan, wl, wr, self.speed, nb_pos, nb_vel)
             if u0 is None:
+                # failed re-solve: keep executing the last successful plan
+                # open-loop (index advances each failed step), like the paper's
+                # follower script; brake straight if there is no plan yet
                 self.fails += 1
-                actions[i] = [0.0, max(v_now - 1.0, 0.0)]
+                self.hold_k[i] += 1
+                Xs, Us = self.solvers[i].prev_X, self.solvers[i].prev_U
+                if Xs is None:
+                    actions[i] = [0.0, max(v_now - 1.0, 0.0)]
+                    continue
+                k = min(self.hold_k[i], Us.shape[1] - 1)
+                kl = min(self.hold_k[i] + self.k_cmd, Xs.shape[1] - 1)
+                steer = float(Xs[2, k]) if self.st else float(Us[1, k])
+                actions[i] = [float(np.clip(steer, -self.cfg.steer_max, self.cfg.steer_max)), max(0.0, float(Xs[3, kl]))]
                 continue
+            self.hold_k[i] = 0
             plan = self.solvers[i].prev_X
             k = min(self.k_cmd, plan.shape[1] - 1) if plan is not None else 1
             if self.st:

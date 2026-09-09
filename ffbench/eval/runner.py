@@ -87,8 +87,10 @@ def run_f1tenth_trial(baseline: str, controller: Controller, src: MapSource, map
     np.random.seed(seed)
     obs = sim.reset(ref.spawn_poses)
     metrics = ZoneMetrics(ref.xs, ref.ys, dt=proto.dt, narrow_center_xy=ref.narrow_xy,
-                             gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
-                             collision_thresh=proto.collision_thresh)
+                          gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
+                          collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp, goal_xy=ref.goal_xy,
+                          zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
+                          finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
     ctx = TrialContext(src, map_label, pathlib.Path(map_dir), ref, proto, n, dynamics,
                        speed, seed, proto.dt, dict(options or {}))
     controller.reset(ctx, obs)
@@ -111,7 +113,7 @@ def run_f1tenth_trial(baseline: str, controller: Controller, src: MapSource, map
             positions.append(np.column_stack([obs["poses_x"], obs["poses_y"]]).copy())
         if record and step % record_skip == 0:
             _write(sim.frame())
-        if metrics.all_zone_cleared:
+        if metrics.all_zone_cleared and proto.course != "full":
             reason = "zone_cleared"
             break
         if metrics.all_done:
@@ -126,7 +128,7 @@ def run_f1tenth_trial(baseline: str, controller: Controller, src: MapSource, map
     row = {
         "baseline": baseline, "sim": "f1tenth", "map": map_label, "n_agents": n,
         "dynamics": dynamics, "target_speed": speed, "seed": seed, "trial": trial,
-        "formation": formation, "steps": steps, "sim_time_s": round(steps * proto.dt, 3),
+        "formation": formation, "course": proto.course, "steps": steps, "sim_time_s": round(steps * proto.dt, 3),
         "wall_time_s": round(time.time() - t0, 2), "terminated": reason,
         "gym_collision": gym_collision, "video": record,
     }

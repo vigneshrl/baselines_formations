@@ -68,7 +68,7 @@ def run_gcbf(req, mode: str) -> List[dict]:
             r.setdefault("n_collided", int(bool(r.get("collided"))))
             r.setdefault("collision", bool(r.get("collided")))
             r.setdefault("terminated", r.get("reason", ""))
-            r.update({"baseline": "gcbf", "sim": mode, "map": req.map_label, "n_agents": req.n,
+            r.update({"baseline": "gcbf", "sim": mode, "map": req.map_label, "course": "zone", "n_agents": req.n,
                       "dynamics": req.dynamics if mode == "f1tenth" else "dubins",
                       "target_speed": float("nan"), "seed": req.proto.seed, "trial": 0,
                       "wall_time_s": round(time.time() - t0, 1),
@@ -94,7 +94,7 @@ def run_las(req, mode: str) -> List[dict]:
         for r in csv.DictReader(f):
             row = {k: (float(v) if v.replace(".", "", 1).replace("-", "", 1).isdigit() else v)
                    for k, v in r.items()}
-            row.update({"baseline": "las", "sim": mode, "map": req.map_label, "n_agents": 3,
+            row.update({"baseline": "las", "sim": mode, "map": req.map_label, "course": "zone", "n_agents": 3,
                         "dynamics": "st", "seed": req.proto.seed, "trial": 0,
                         "wall_time_s": round(time.time() - t0, 1),
                         "note": f"row is already the mean over {req.proto.trials} episodes"})

@@ -46,6 +46,9 @@ def parse(argv=None):
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--max_steps", "--max-steps", type=int, default=6000)
     ap.add_argument("--formation", choices=["auto", "abreast", "column"], default="auto")
+    ap.add_argument("--course", choices=["zone", "full"], default="zone",
+                    help="zone: spawn 7 m before the pinch, score the pinch window; "
+                         "full: spawn at the start line, score the whole narrow section and start-to-finish")
     ap.add_argument("--spawn", choices=["zone_entry", "track_start"], default="zone_entry")
     ap.add_argument("--lateral_gap", type=float, default=0.6)
     ap.add_argument("--zone_half_m", type=float, default=12.0)
@@ -59,6 +62,9 @@ def parse(argv=None):
     ap.add_argument("--robot_radius", type=float, default=None,
                     help="deform native: rescale the corridor to this robot radius (default: no rescale, DEFORM's formation parameters are metric)")
     ap.add_argument("--robot_model", default="burger", help="deform native: TurtleBot3 model (DEFORM ships burger + RealSense)")
+    ap.add_argument("--patch_model", default=None, help="fastfunnels: patch (funnel) policy path")
+    ap.add_argument("--agent_model", default=None, help="fastfunnels: RL follower policy path (N=1 checkpoint)")
+    ap.add_argument("--follower", choices=["nmpc", "rl"], default="nmpc", help="fastfunnels: follower controller")
     ap.add_argument("--timeout_s", type=float, default=None, help="deform: per-episode timeout (default 300 s bridge, 600 s native)")
     ap.add_argument("--out", default=None, help="output stem (default ffbench_results/<baseline>_<map>_n<N>_<sim>)")
     ap.add_argument("--render", action="store_true")
@@ -96,7 +102,9 @@ def main(argv=None) -> int:
     if spec.agent_counts and args.num_agents not in spec.agent_counts:
         print(f"{spec.name} supports num_agents in {spec.agent_counts}")
         return 2
-    proto = Protocol(spawn=args.spawn, formation=args.formation, lateral_gap=args.lateral_gap,
+    if args.course == "full" and args.max_steps == 6000:
+        args.max_steps = 15000          # 150 s of sim for the 120 m course
+    proto = Protocol(course=args.course, spawn=args.spawn, formation=args.formation, lateral_gap=args.lateral_gap,
                      zone_half_m=args.zone_half_m, spawn_up_m=args.spawn_up_m,
                      max_steps=args.max_steps, trials=args.trials,
                      seed=args.seed, target_speed=args.speed, spawn_jitter_m=args.spawn_jitter,
@@ -104,10 +112,12 @@ def main(argv=None) -> int:
     options = {"orca_walls": not args.orca_no_walls, "controller_model": args.controller_model,
                "save_traces": args.save_traces or args.record,
                "robot_radius": args.robot_radius, "robot_model": args.robot_model,
+               "patch_model": args.patch_model, "agent_model": args.agent_model, "follower": args.follower,
                "timeout_s": args.timeout_s}
     sims = ["f1tenth", "native"] if args.sim == "both" else [args.sim]
     maps = resolve(args.map)
-    stem = args.out or str(RESULTS / f"{spec.name}_{args.map.replace(':', '-')}_n{args.num_agents}_{args.sim}")
+    stem = args.out or str(RESULTS / f"{spec.name}_{args.map.replace(':', '-')}_n{args.num_agents}_{args.sim}"
+                           + ("_full" if args.course == "full" else ""))
     args.out_stem = stem
     jsonl = pathlib.Path(stem + ".jsonl")
     if jsonl.exists():
@@ -143,10 +153,11 @@ def main(argv=None) -> int:
             from ffbench.eval.animate_traces import animate
             for key, tr in traces.items():
                 sim_, mp, trial = key.split("|")
-                if sim_ == "f1tenth" or int(trial) >= args.record_trials:
-                    continue
                 row = next(r for r in rows if r["sim"] == sim_ and r["map"] == mp and int(r["trial"]) == int(trial))
-                print("video:", animate(tr, mp, row, f"{stem}_{sim_}_t{trial}.mp4"))
+                if row.get("video") or int(trial) >= args.record_trials:
+                    continue
+                dt_row = proto.native_dt if sim_ == "native" else proto.dt
+                print("video:", animate(tr, mp, row, f"{stem}_{sim_}_t{trial}.mp4", sim_dt=dt_row))
     for r in rows:
         if r.get("video"):
             print("video:", r["video"])
@@ -178,9 +189,10 @@ def _run_f1tenth(spec, src, label, map_dir, proto, args, options):
                                     trace=args.save_traces or args.record,
                                     record=(f"{args.out_stem}_f1tenth_t{t}.mp4"
                                             if args.record and t < args.record_trials else None))
-            print(f"[{spec.name}/{label}/n{args.num_agents}/{args.dynamics}] trial {t + 1}/{proto.trials}: "
+            print(f"[{spec.name}/{label}/n{args.num_agents}/{args.dynamics}/{proto.course}] trial {t + 1}/{proto.trials}: "
                   f"{row['terminated']:13s} success={row['success']:.0f} cleared={row['n_completed']}/{args.num_agents} "
-                  f"V={row['avg_speed_mps']:.2f} T={row['time_to_goal_s']} ({row['wall_time_s']}s)")
+                  f"V={row['avg_speed_mps']:.2f} T={row['time_to_goal_s']} finished={row.get('finished')} "
+                  f"T_course={row.get('t_course_s')} ({row['wall_time_s']}s)")
             rows.append(row)
     finally:
         pool.close()
