@@ -33,7 +33,7 @@ from ffbench.paths import RESULTS  # noqa: E402
 
 def parse(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--baseline", help="orca | leader_follower | nmpc | deform | gcbf | las")
+    ap.add_argument("--baseline", help="orca | leader_follower | dmpc | gcbf | deform | las | fastfunnels")
     for b in REGISTRY:
         ap.add_argument(f"--{b}", action="store_true", help=f"shorthand for --baseline {b}")
     ap.add_argument("--num_agents", "--num-agents", "-n", type=int, default=4)
@@ -46,9 +46,10 @@ def parse(argv=None):
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--max_steps", "--max-steps", type=int, default=6000)
     ap.add_argument("--formation", choices=["auto", "abreast", "column"], default="auto")
-    ap.add_argument("--course", choices=["zone", "full"], default="zone",
+    ap.add_argument("--course", choices=["zone", "full", "tunnel"], default="zone",
                     help="zone: spawn 7 m before the pinch, score the pinch window; "
-                         "full: spawn at the start line, score the whole narrow section and start-to-finish")
+                         "full: spawn at the start line, score the whole narrow section and start-to-finish; "
+                         "tunnel: spawn at the start line, run until every agent is past the narrow section")
     ap.add_argument("--zone", choices=["pinch", "section"], default="pinch",
                     help="zone course: score the +-12 m pinch window (pinch) or the whole narrow section (section)")
     ap.add_argument("--spawn", choices=["zone_entry", "track_start"], default="zone_entry")
@@ -59,7 +60,7 @@ def parse(argv=None):
     ap.add_argument("--spawn_jitter", type=float, default=0.0,
                     help="+- metres of per-seed spawn jitter (0 = identical trials for deterministic baselines)")
     ap.add_argument("--controller_model", choices=["kinematic", "st"], default=None,
-                    help="nmpc: prediction model (default kinematic)")
+                    help="dmpc: prediction model (default kinematic)")
     ap.add_argument("--orca_no_walls", action="store_true", help="orca: hide the corridor walls from RVO2")
     ap.add_argument("--robot_radius", type=float, default=None,
                     help="deform native: rescale the corridor to this robot radius (default: no rescale, DEFORM's formation parameters are metric)")
@@ -104,7 +105,7 @@ def main(argv=None) -> int:
     if spec.agent_counts and args.num_agents not in spec.agent_counts:
         print(f"{spec.name} supports num_agents in {spec.agent_counts}")
         return 2
-    if args.course == "full" and args.max_steps == 6000:
+    if args.course in ("full", "tunnel") and args.max_steps == 6000:
         args.max_steps = 15000          # 150 s of sim for the 120 m course
     if args.zone == "section" and args.max_steps == 6000:
         args.max_steps = 9000
@@ -121,8 +122,9 @@ def main(argv=None) -> int:
     sims = ["f1tenth", "native"] if args.sim == "both" else [args.sim]
     maps = resolve(args.map)
     stem = args.out or str(RESULTS / f"{spec.name}_{args.map.replace(':', '-')}_n{args.num_agents}_{args.sim}"
-                           + ("_full" if args.course == "full" else ("_section" if args.zone == "section" else "")))
+                           + ("_" + args.course if args.course != "zone" else ("_section" if args.zone == "section" else "")))
     args.out_stem = stem
+    options["out_dir"] = os.path.dirname(os.path.abspath(stem))
     jsonl = pathlib.Path(stem + ".jsonl")
     if jsonl.exists():
         jsonl.unlink()
@@ -160,7 +162,7 @@ def main(argv=None) -> int:
                 row = next(r for r in rows if r["sim"] == sim_ and r["map"] == mp and int(r["trial"]) == int(trial))
                 if row.get("video") or int(trial) >= args.record_trials:
                     continue
-                dt_row = proto.native_dt if sim_ == "native" else proto.dt
+                dt_row = row.get("trace_dt") or (proto.native_dt if sim_ == "native" else proto.dt)
                 print("video:", animate(tr, mp, row, f"{stem}_{sim_}_t{trial}.mp4", sim_dt=dt_row))
     for r in rows:
         if r.get("video"):

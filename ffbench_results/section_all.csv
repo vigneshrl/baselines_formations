@@ -1,5 +1,5 @@
 baseline,sim,map,course,n_agents,dynamics,target_speed,trials,avg_speed_mps,success,time_to_goal_s,flow_rate,deformability,n_completed,n_collided,safety_rate,collision,spread_at_entry_m,spread_at_narrow_m,finished,t_course_s,v_course_mps,steps,sim_time_s,wall_time_s
 leader_follower,f1tenth,standard_ON,zone,4,st,5.0,3,3.479,0.0,inf,0.0,nan,0.0,0.0,0.0,1.0,0.5507,0.0,0.0,inf,2.65,776.3333,7.7633,2.5633
 nmpc,f1tenth,standard_ON,zone,4,st,5.0,3,4.9413,1.0,11.0,0.114,6.2223,4.0,0.0,1.0,0.0,1.938,0.0,0.0,inf,4.7083,1150.3333,11.5033,13.79
-orca,f1tenth,standard_ON,zone,4,st,5.0,4,3.363,0.5,17.75,0.0353,1.4512,2.0,0.0,0.5,0.5,1.808,0.0,0.0,inf,3.213,1334.5,13.345,3.17
-orca,native,standard_ON,zone,4,rvo2_disc,5.0,3,3.3157,0.0,15.9833,0.0785,4.0827,4.0,3.0,1.0,1.0,1.7623,0.0,0.0,inf,3.2987,325.3333,16.2667,0.07
+orca,f1tenth,standard_ON,zone,4,st,5.0,4,3.8718,1.0,14.275,0.0894,3.8075,4.0,0.0,1.0,0.0,1.8042,0.0,0.0,inf,3.7657,1473.25,14.7325,3.685
+orca,native,standard_ON,zone,4,rvo2_disc,5.0,3,4.9407,0.6667,10.8333,0.1158,4.3427,4.0,1.0,1.0,0.3333,1.7923,0.0,0.0,inf,4.8893,221.6667,11.0833,0.04

@@ -79,6 +79,7 @@ def _bridge_launch(name: str, n: int, poses, goal, end_mode: str, timeout_s: flo
   <arg name="episode_timeout_s" default="{timeout_s:.0f}"/>
   <arg name="render" default="false"/>
   <arg name="dynamics" default="{dynamics}"/>
+  <arg name="record_video_path" default=""/>
 
   <node name="f1tenth_bridge" pkg="f1tenth_deform_bridge" type="f1tenth_bridge_node.py"
         output="screen" required="true">
@@ -88,6 +89,9 @@ def _bridge_launch(name: str, n: int, poses, goal, end_mode: str, timeout_s: flo
     <param name="tb_num" value="{n}"/>
     <param name="render" value="$(arg render)"/>
     <param name="dynamics" value="$(arg dynamics)"/>
+    <param name="record_video_path" value="$(arg record_video_path)"/>
+    <param name="record_fps" value="20"/>
+    <param name="record_frame_skip" value="5"/>
     <param name="auto_publish_goal" value="true"/>
     <param name="goal_republish_period_s" value="2.0"/>
     <param name="episode_end_mode" value="{end_mode}"/>

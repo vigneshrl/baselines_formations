@@ -71,13 +71,15 @@ def prepare_bundle(req, mode: str) -> pathlib.Path:
         collision_thresh = proto.collision_thresh
     ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], req.n, proto, "abreast")
     poses = [(float(x), float(y), float(th)) for x, y, th in ref.spawn_poses]
-    full = proto.course == "full"
-    if full:
+    full = proto.course in ("full", "tunnel")
+    if proto.course == "full":
         gx, gy = float(src.centerline[-1, 0]), float(src.centerline[-1, 1])
         tg = src.tangent(len(src.centerline) - 1)
         goal = (gx, gy, math.atan2(tg[1], tg[0]))
-    else:
-        goal = (ref.goal_xy[0], ref.goal_xy[1], ref.heading)
+    else:                                  # zone: section/pinch exit; tunnel: just past the narrow section
+        k = min(len(ref.xs) - 1, len(ref.xs) - 2)
+        th = math.atan2(float(ref.ys[-1] - ref.ys[k]), float(ref.xs[-1] - ref.xs[k])) if proto.course == "tunnel" else ref.heading
+        goal = (ref.goal_xy[0], ref.goal_xy[1], th)
     out = pathlib.Path(req.options.get("out_dir") or GENERATED) / "ros"
     return write_ros(
         src, out, n_agents=req.n, poses=poses, goal=goal,
@@ -91,7 +93,7 @@ def prepare_bundle(req, mode: str) -> pathlib.Path:
 
 
 def _docker_cmd(bundle: pathlib.Path, results: pathlib.Path, mode: str, timeout_s: float,
-                name: str, map_name: str, n_agents: int = 4) -> List[str]:
+                name: str, map_name: str, n_agents: int = 4, video: str = "") -> List[str]:
     bridge = DEFORM_DOCKER / "f1tenth_deform_bridge"
     vols = [
         f"{bundle / 'track' / map_name}:/opt/f1tenth_gym/maps/{map_name}",
@@ -114,7 +116,7 @@ def _docker_cmd(bundle: pathlib.Path, results: pathlib.Path, mode: str, timeout_
             f"(roslaunch -p {port} /mnt/ffbench/launch/deform_native.launch episode_timeout_s:={timeout_s:.0f} gui:=false &) && "
             "sleep 15 && python3 /mnt/ffbench/ffbench_ros/scripts/metrics_node.py "
             f"_config:=/mnt/ffbench/config/metrics.yaml _num_agents:={n_agents} "
-            f"_episode_timeout_s:={timeout_s:.0f} _results_dir:=/tmp/deform_results; "
+            f"_episode_timeout_s:={timeout_s:.0f} _results_dir:=/tmp/deform_results _trace:=true; "
             f"pkill -f 'roslaunch -p {port}'; sleep 3"
         )
     else:
@@ -122,7 +124,7 @@ def _docker_cmd(bundle: pathlib.Path, results: pathlib.Path, mode: str, timeout_
             f"export ROS_MASTER_URI=http://localhost:{port} && "
             "source /opt/ros/noetic/setup.bash && source /root/DEFORM/devel/setup.bash && "
             f"roslaunch -p {port} f1tenth_deform_bridge deform_f1tenth.launch target_episodes:=1 "
-            f"episode_timeout_s:={timeout_s:.0f}"
+            f"episode_timeout_s:={timeout_s:.0f} record_video_path:={video or ''}"
         )
     if runtime() == "apptainer":
         # same mounts, apptainer syntax; writable tmpfs for ROS logs / catkin state
@@ -173,7 +175,7 @@ def run_deform(req, mode: str) -> List[dict]:
     bundle = prepare_bundle(req, mode)
     results = bundle / "results"
     results.mkdir(exist_ok=True)
-    full = req.proto.course == "full"
+    full = req.proto.course in ("full", "tunnel")
     timeout_s = float(req.options.get("timeout_s") or (900.0 if full else (600.0 if mode == "native" else 300.0)))
     map_name = bundle.name.rsplit("_", 1)[0]
     rows: List[dict] = []
@@ -190,7 +192,8 @@ def run_deform(req, mode: str) -> List[dict]:
     for t in range(req.proto.trials):
         before = set(glob.glob(str(results / "zone_ep*.csv")))
         name = f"deform_ffbench_{req.n}_{t}_{os.getpid()}"
-        cmd = _docker_cmd(bundle, results, mode, timeout_s, name, map_name, req.n)
+        video = f"/tmp/deform_results/deform_{mode}_t{t:02d}.mp4" if (req.options.get("save_traces") and mode == "f1tenth") else ""
+        cmd = _docker_cmd(bundle, results, mode, timeout_s, name, map_name, req.n, video)
         t0 = time.time()
         print(f"[deform] trial {t + 1}/{req.proto.trials} ({mode}) ...")
         log = results / f"trial_{t:02d}_{mode}.log"
@@ -208,6 +211,12 @@ def run_deform(req, mode: str) -> List[dict]:
         for r in _read_rows(new):
             if ended:                      # bridge mode logs the reason; the metrics node writes it itself
                 r["terminated"] = ended
+            if video and (results / pathlib.Path(video).name).exists():
+                r["video"] = str(results / pathlib.Path(video).name)
+            traces = sorted(results.glob("trace_*.npz"))
+            if mode == "native" and traces and traces[-1].stat().st_mtime > t0:
+                import numpy as np
+                r["_trace"] = np.load(traces[-1])["positions"]
             r.update({"baseline": "deform", "sim": mode, "map": req.map_label, "course": req.proto.course,
                       "n_agents": req.n, "dynamics": req.dynamics if mode == "f1tenth" else "turtlebot3",
                       "target_speed": float("nan"), "seed": req.proto.seed + t, "trial": t,

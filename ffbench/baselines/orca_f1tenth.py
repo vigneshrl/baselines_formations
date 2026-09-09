@@ -34,6 +34,10 @@ class OrcaController:
             num_cars=n, map_name=ctx.src.name, render=False, seed=ctx.seed,
             target_speed=float(ctx.speed), max_speed=max(10.0, float(ctx.speed)),
             dt=ctx.dt, lateral_gap=proto.lateral_gap,
+            # with the corridor walls in RVO2 the stock 6 s obstacle horizon
+            # makes the outer cars converge into the rank at the start line;
+            # use the same horizon as for other agents
+            time_horizon_obs=float(ctx.options.get("orca_obs_horizon") or 2.0),
         )
         walls = bool(ctx.options.get("orca_walls", self.walls))
         r = orca.F1TenthORCARunner.__new__(orca.F1TenthORCARunner)

@@ -50,6 +50,7 @@ class MetricsNode:
             collision_thresh=float(cfg.get("collision_thresh_m", 0.5)),
         )
         self.pose = [None] * self.n
+        self.trace = [] if rospy.get_param("~trace", False) else None
         for i in range(self.n):
             rospy.Subscriber(f"/tb_{i}/odom", Odometry, self._odom_cb, callback_args=i, queue_size=1)
         self.t_start = None
@@ -73,7 +74,10 @@ class MetricsNode:
                 continue
             if self.t_start is None:
                 self.t_start = time.time()
-            self.metrics.step(self._obs())
+            obs = self._obs()
+            self.metrics.step(obs)
+            if self.trace is not None:
+                self.trace.append(np.column_stack([obs["poses_x"], obs["poses_y"]]))
             if self.metrics.all_zone_cleared and self.end_mode == "narrow_clear":
                 reason = "zone_cleared"
                 break
@@ -96,6 +100,10 @@ class MetricsNode:
             w.writeheader()
             w.writerow(row)
         rospy.loginfo("[ffbench_metrics] wrote %s (%s)", path, reason)
+        if self.trace:
+            tp = os.path.join(self.results_dir, f"trace_{int(time.time())}.npz")
+            np.savez_compressed(tp, positions=np.asarray(self.trace), dt=1.0 / self.rate_hz)
+            rospy.loginfo("[ffbench_metrics] trace %s (%d samples)", tp, len(self.trace))
 
 
 if __name__ == "__main__":

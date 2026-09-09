@@ -221,9 +221,26 @@ def run_fastfunnels(req, mode: str) -> List[dict]:
     for t in range(proto.trials):
         seed = proto.seed + t
         t0 = time.time()
-        env = JointEnv(JointEnvConfig(num_agents=n, map_name=src.name, render_mode=None,
+        record = req.options.get("save_traces") and req.options.get("record_video", True)
+        env = JointEnv(JointEnvConfig(num_agents=n, map_name=src.name,
+                                      render_mode="rgb_array" if record else None,
                                       random_spawn=False, max_steps=proto.max_steps,
                                       agent_use_lidar=True, obs_mode="lidar"))
+        writer, video_path = None, None
+        if record:
+            import cv2
+            out_dir = pathlib.Path(req.options.get("out_dir") or (ROOT / "ffbench_results"))
+            video_path = str(out_dir / f"fastfunnels_n{n}_{proto.course}_t{t:02d}.mp4")
+
+            def _frame():
+                nonlocal writer
+                fr = env.f110.render()
+                if fr is None:
+                    return
+                if writer is None:
+                    h, w = fr.shape[:2]
+                    writer = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*"mp4v"), 20, (w, h))
+                writer.write(cv2.cvtColor(np.asarray(fr), cv2.COLOR_RGB2BGR))
         env._real_agents_active = True
         env.reset(seed=seed)
         predict_patch = load_patch_policy(patch_path, env)
@@ -243,9 +260,9 @@ def run_fastfunnels(req, mode: str) -> List[dict]:
         metrics = ZoneMetrics(ref.xs, ref.ys, dt=proto.dt, narrow_center_xy=ref.narrow_xy,
                               gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
                               collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp,
-                          goal_xy=(ref.goal_xy if proto.course == "full" else None),   # zone course: never stop before the zone is cleared
+                          goal_xy=(ref.goal_xy if proto.course in ("full", "tunnel") else None),   # zone course: never stop before the zone is cleared
                               zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
-                          finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
+                          finish_line_m=(proto.goal_buffer_m if proto.course in ("full", "tunnel") else None))
 
         def follower_obs():
             b = env.current_base_obs
@@ -266,6 +283,8 @@ def run_fastfunnels(req, mode: str) -> List[dict]:
                 aa = np.stack([np.asarray(predict_agent(env._step_obs[1 + i]), dtype=np.float32) for i in range(n)])
             env._step_with_frozen_policy(pa, aa)
             steps = step
+            if record and step % 5 == 0:
+                _frame()
             o = follower_obs()
             b = env.current_base_obs
             if o is not None:
@@ -292,8 +311,11 @@ def run_fastfunnels(req, mode: str) -> List[dict]:
                     continue
                 reason = f"env:{why or 'terminated'}"
                 break
+        if writer is not None:
+            writer.release()
         env.close()
         row = {"baseline": "fastfunnels", "sim": "f1tenth", "map": req.map_label, "course": proto.course,
+               "video": video_path if writer is not None else None,
                "n_agents": n, "dynamics": "st", "target_speed": float("nan"), "seed": seed, "trial": t,
                "formation": "jointenv", "steps": steps, "sim_time_s": round(steps * proto.dt, 3),
                "wall_time_s": round(time.time() - t0, 2), "terminated": reason, "gym_collision": collided,

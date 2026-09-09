@@ -25,20 +25,21 @@ def run_orca_native_trial(req, seed: int, trial: int) -> dict:
     ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, proto, "abreast", seed=seed)
     cfg = orca.OrcaConfig(num_cars=n, map_name=src.name, render=False, seed=seed,
                           target_speed=float(speed), max_speed=max(10.0, float(speed)),
-                          dt=dt, lateral_gap=proto.lateral_gap)
+                          dt=dt, lateral_gap=proto.lateral_gap,
+                          time_horizon_obs=float(req.options.get("orca_obs_horizon") or 2.0))
     walls = bool(req.options.get("orca_walls", True))
     wrapper = orca.ORCAWrapper(ref.spawn_poses[:, :2], cfg.max_speed, cfg,
                                obstacle_polygons=rvo2_polygons(src, walls=walls, obstacles=True))
     metrics = ZoneMetrics(ref.xs, ref.ys, dt=dt, narrow_center_xy=ref.narrow_xy,
                           gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
                           collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp,
-                          goal_xy=(ref.goal_xy if proto.course == "full" else None),   # zone course: never stop before the zone is cleared
+                          goal_xy=(ref.goal_xy if proto.course in ("full", "tunnel") else None),   # zone course: never stop before the zone is cleared
                           zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
-                          finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
+                          finish_line_m=(proto.goal_buffer_m if proto.course in ("full", "tunnel") else None))
     xs, ys = ref.xs, ref.ys
     nwp = len(xs)
     wp_idx = [ref.idx0] * n
-    max_steps = int(proto.max_steps * proto.dt / dt)
+    max_steps = int(proto.max_steps * proto.dt / dt) * (2 if proto.course in ("full", "tunnel") else 1)   # discs crawl near walls
     reason = "max_steps"
     t0 = time.time()
     steps = 0

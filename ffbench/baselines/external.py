@@ -50,9 +50,25 @@ def run_gcbf(req, mode: str) -> List[dict]:
         out_path = out / f"gcbf_f110_{req.map_label}_n{req.n}_{stamp}.jsonl"
         cmd = [py, "-m", "gcbf_baseline.run_gcbf_f110", "--split", f"{req.map_label}:{split}:1",
                "--n-agents", req.n, "--dt", req.proto.dt, "--out", out_path]
+    if req.proto.course in ("full", "tunnel"):
+        # start at the map start, exit test just past the narrow section
+        # (waypoints of the map's own centreline, which the gcbf runners use)
+        import numpy as np
+        src = req.src; cl = src.centerline; nw = src.nearest_wp(*src.narrow_xy)
+        w = np.array([sum(src.lateral_extent(cl[i, 0], cl[i, 1], src.tangent(i))) for i in range(len(cl))])
+        narrow = (w > 0) & (w < req.proto.narrow_width_factor * src.gap_width_m)
+        hi = nw
+        while hi < len(cl) - 1 and narrow[hi + 1]:
+            hi += 1
+        cmd += ["--pre-wp", nw, "--exit-offset", hi - nw, "--post-wp", min(len(cl) - 1, hi + 2) - nw,
+                "--max-steps", 8000 if mode == "native" else 20000]
     for k, v in req.options.items():
-        if k.startswith("gcbf_"):
+        if k.startswith("gcbf_") and v is not None:
             cmd += ["--" + k[5:].replace("_", "-"), v]
+    trace_dir = None
+    if req.options.get("save_traces"):
+        trace_dir = out / f"gcbf_{mode}_traces_{stamp}"
+        cmd += ["--trace-dir", trace_dir]
     t0 = time.time()
     _run(cmd, BASELINES)
     rows = []
@@ -61,6 +77,12 @@ def run_gcbf(req, mode: str) -> List[dict]:
             if not line.strip():
                 continue
             r = json.loads(line)
+            if trace_dir is not None:
+                import numpy as np
+                tp = pathlib.Path(trace_dir) / f"{r.get('name', req.src.name)}.npy"
+                if tp.exists():
+                    r["_trace"] = np.load(tp)[:, :, :2]
+                    r["trace_dt"] = float(req.proto.dt if mode == "f1tenth" else 0.03)
             r.setdefault("success", 1.0 if r.get("cleared") else 0.0)
             n_cleared = r.get("n_cleared", r.get("n_completed", 0)) or 0
             r.setdefault("n_completed", n_cleared)
@@ -68,7 +90,7 @@ def run_gcbf(req, mode: str) -> List[dict]:
             r.setdefault("n_collided", int(bool(r.get("collided"))))
             r.setdefault("collision", bool(r.get("collided")))
             r.setdefault("terminated", r.get("reason", ""))
-            r.update({"baseline": "gcbf", "sim": mode, "map": req.map_label, "course": "zone", "n_agents": req.n,
+            r.update({"baseline": "gcbf", "sim": mode, "map": req.map_label, "course": req.proto.course, "n_agents": req.n,
                       "dynamics": req.dynamics if mode == "f1tenth" else "dubins",
                       "target_speed": float("nan"), "seed": req.proto.seed, "trial": 0,
                       "wall_time_s": round(time.time() - t0, 1),
@@ -94,7 +116,7 @@ def run_las(req, mode: str) -> List[dict]:
         for r in csv.DictReader(f):
             row = {k: (float(v) if v.replace(".", "", 1).replace("-", "", 1).isdigit() else v)
                    for k, v in r.items()}
-            row.update({"baseline": "las", "sim": mode, "map": req.map_label, "course": "zone", "n_agents": 3,
+            row.update({"baseline": "las", "sim": mode, "map": req.map_label, "course": req.proto.course, "n_agents": 3,
                         "dynamics": "st", "seed": req.proto.seed, "trial": 0,
                         "wall_time_s": round(time.time() - t0, 1),
                         "note": f"row is already the mean over {req.proto.trials} episodes"})

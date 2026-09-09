@@ -147,7 +147,7 @@ forks with `--no-deps`); `environment-las.yaml` documents it.
 |---|---|---|
 | `--orca` | `baselines/orca.py` control law: lane following → RVO2 velocity → pure-pursuit steering. RVO2 sees the corridor walls and obstacles (`--orca_no_walls` hides them). | RVO2 integrates holonomic discs itself. |
 | `--leader_follower` | `baselines/leader_follower.py`: pure-pursuit leader, PD gap followers, column spawn. | its native simulator is f1tenth_gym |
-| `--nmpc` | decentralised NMPC per agent (`ffbench/baselines/nmpc.py`): own-lane reference, corridor half-plane constraints from the traced polygon, hard slacked keep-out from the other agents, kinematic or single-track prediction model (`--controller_model st`), 20 Hz. No funnel, no leader. | its native simulator is f1tenth_gym |
+| `--dmpc` (alias `--nmpc`) | basic decentralised MPC per agent (`ffbench/baselines/nmpc.py`): own-lane reference, corridor half-plane constraints from the traced polygon, hard slacked keep-out from the other agents' constant-velocity prediction, kinematic or single-track model (`--controller_model st`), 20 Hz. No funnel, no leader. | its native simulator is f1tenth_gym |
 | `--deform` | DEFORM's planner driving the f1tenth plant through the ROS bridge (`--dynamics` is passed to the bridge). | Gazebo + TurtleBot3 on a world generated from the map, corridor rescaled by `robot_radius / 0.29` (`--robot_radius`, `--robot_model`). |
 | `--gcbf` | `gcbf_baseline.run_gcbf_f110` (Dubins yaw-rate/accel → steer/speed). | `gcbf_baseline.run_gcbf_eval` (PyRoboSim room + JAX policy). |
 | `--fastfunnels` (`--ours`) | the frozen patch (funnel) policy `patch_policy_models/run_20260518_151612/checkpoint_18510000` (legacy raw-action checkpoint, steering-rate shim applied) driving `JointEnv`, followers = the paper's decentralised NMPC (`envs/mpc.py`, wedge slots behind the patch car, `--follower nmpc`) or the N=1 RL checkpoint (`--follower rl`). Needs `FASTFUNNELS_ROOT` with the training code and models. | f1tenth_gym is its native simulator |
@@ -260,6 +260,32 @@ Things learned while verifying, all now built into the protocol:
 - The raw deformability metric returns NaN whenever the last agent exits
   alone; the reported column samples the tightest spread only while at least
   two agents are in the zone, floored at one car width.
+
+### Start of the map to past the tunnel (`--course tunnel`) — the gallery course
+
+One course for every method on both backends: spawn in the 0.6 m rank at the
+start of the map, drive the 9 m approach, the bend and the whole 51 m narrow
+section, and stop 3 m past its exit (101.7 m). 4 agents, 3 trials for the
+f1tenth-native baselines, 1 for the external runners
+(`ffbench_results/tunnel_all.csv`, clips in `ffbench_results/gallery/`):
+
+| method | on f1tenth_gym | in its own simulator |
+|---|---|---|
+| ORCA | 0/3: the outer cars touch in the bend before the tunnel | RVO2: 2-3 of 4 discs exit the tunnel within the 300 s budget, contacts on the way |
+| leader-follower | 0/3: rear-ends itself in the bend | same run (f1tenth_gym is its native simulator) |
+| DMPC (basic decentralised MPC, formerly listed as NMPC) | **3/3, all four through in 12.0 s** | same run |
+| GCBF+ | 4/4 through, slowly (137 s in the tunnel) | PyRoboSim: 4/4 through in 95 s |
+| DEFORM | creeps at the start, never reaches the funnel (600 s) | Gazebo: same |
+| FastFunnels, 1 follower | **3/3, tunnel in 7.3 s at 7.1 m/s** | same run |
+| FastFunnels, 4 followers | 0/3: followers collide at the start | same run |
+
+Two configuration notes that came out of this course: ORCA's obstacle time
+horizon is 2 s (the stock 6 s made wall-aware cars converge into each other on
+the start line; the pinch and section rows were re-verified with it and are
+unchanged or better), and "DMPC" is the decentralised MPC baseline itself,
+`--nmpc` still works as an alias. A virtual-leader formation variant with
+shared plans was tried and dropped: on this plant IPOPT returned full-lock
+solutions for it.
 
 ### Whole narrow section (`--zone section`)
 

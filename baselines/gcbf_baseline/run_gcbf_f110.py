@@ -92,8 +92,11 @@ def rollout(map_dir: str, split: str, policy, args, n_rect: int) -> Result:
     collided, cstep, reason, step = False, None, "max_steps", 0
     cleared_at: int | None = None
 
+    trace = getattr(args, "_trace", None)
     for step in range(1, args.max_steps + 1):
         xy = np.stack([obs["poses_x"], obs["poses_y"]], axis=1)
+        if trace is not None:
+            trace.append(xy.copy())
         yaw = np.asarray(obs["poses_theta"], dtype=float)
         v_phys = np.asarray(obs["linear_vels_x"], dtype=float)
 
@@ -187,6 +190,7 @@ def main() -> None:
     ap.add_argument("--collision-thresh", type=float, default=0.5)
     ap.add_argument("--n-rect", type=int, default=None)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--trace-dir", default=None, help="write a .npy (T, n, 2) trajectory per map")
     args = ap.parse_args()
 
     splits = []
@@ -228,10 +232,14 @@ def main() -> None:
         for label, root, names in splits:
             for i, nm in enumerate(names):
                 try:
+                    args._trace = [] if args.trace_dir else None
                     r = rollout(os.path.join(root, nm), label, policy, args,
                                 args.n_rect)
                     rows.append(r)
                     fh.write(json.dumps(asdict(r)) + "\n")
+                    if args._trace:
+                        os.makedirs(args.trace_dir, exist_ok=True)
+                        np.save(os.path.join(args.trace_dir, f"{nm}.npy"), np.asarray(args._trace))
                     fh.flush()
                     msg = (f"cleared={r.cleared} ({r.n_cleared}/{r.n_agents}) "
                            f"{r.reason} speed={r.avg_speed_mps:.2f}")

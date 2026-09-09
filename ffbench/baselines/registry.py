@@ -84,8 +84,9 @@ REGISTRY: Dict[str, BaselineSpec] = {
         "leader_follower", "Pure-pursuit convoy with PD gap control",
         controller=_lf_ctrl, formation="column",
         native_note="its native simulator is f1tenth_gym"),
-    "nmpc": BaselineSpec(
-        "nmpc", "Decentralised NMPC per agent (own lane, corridor + neighbour constraints, no funnel)",
+    "dmpc": BaselineSpec(
+        "dmpc", "Basic decentralised MPC: each agent tracks its own lane at the target speed with corridor half-plane "
+                "constraints and a keep-out from the other agents' predicted (constant-velocity) motion; no leader, no funnel",
         controller=_nmpc_ctrl, control_hz=20.0,
         native_note="its native simulator is f1tenth_gym"),
     "fastfunnels": BaselineSpec(
@@ -106,7 +107,7 @@ REGISTRY: Dict[str, BaselineSpec] = {
         native_note="its own f110-multi-agent gym on the open_narrow_obs override"),
 }
 
-ALIASES = {"ours": "fastfunnels", "ff": "fastfunnels", "lf": "leader_follower", "mpc": "nmpc", "dmpc": "nmpc", "gcbfplus": "gcbf",
+ALIASES = {"ours": "fastfunnels", "ff": "fastfunnels", "lf": "leader_follower", "mpc": "dmpc", "nmpc": "dmpc", "gcbfplus": "gcbf",
            "gcbf+": "gcbf"}
 
 

@@ -89,9 +89,9 @@ def run_f1tenth_trial(baseline: str, controller: Controller, src: MapSource, map
     metrics = ZoneMetrics(ref.xs, ref.ys, dt=proto.dt, narrow_center_xy=ref.narrow_xy,
                           gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
                           collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp,
-                          goal_xy=(ref.goal_xy if proto.course == "full" else None),   # zone course: never stop before the zone is cleared
+                          goal_xy=(ref.goal_xy if proto.course in ("full", "tunnel") else None),   # zone course: never stop before the zone is cleared
                           zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
-                          finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
+                          finish_line_m=(proto.goal_buffer_m if proto.course in ("full", "tunnel") else None))
     ctx = TrialContext(src, map_label, pathlib.Path(map_dir), ref, proto, n, dynamics,
                        speed, seed, proto.dt, dict(options or {}))
     controller.reset(ctx, obs)

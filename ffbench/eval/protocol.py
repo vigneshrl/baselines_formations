@@ -22,8 +22,10 @@ from ffbench.maps.source import MapSource
 
 @dataclass
 class Protocol:
-    course: str = "zone"               # zone: spawn before the pinch, score the pinch window
-                                       # full: spawn at the track start, score the whole narrow section + start-to-finish
+    course: str = "zone"               # zone:   spawn before the pinch, score the pinch window
+                                       # full:   spawn at the track start, score the whole narrow section + start-to-finish
+                                       # tunnel: spawn at the track start, run until every agent is past the narrow section
+    tunnel_exit_margin_m: float = 3.0  # tunnel: the run ends this far past the narrow section
     spawn: str = "zone_entry"          # zone_entry | track_start (forced by course=full)
     zone: str = "pinch"                # zone course: pinch (+-zone_half_m around the pinch) | section (the whole narrow section)
     narrow_width_factor: float = 1.3   # full course: a waypoint is "narrow" while corridor width < factor * gap
@@ -189,7 +191,7 @@ def build_reference(src: MapSource, xs: np.ndarray, ys: np.ndarray, n: int,
     xs = np.asarray(xs, dtype=np.float32)
     ys = np.asarray(ys, dtype=np.float32)
     closed = _is_closed(xs, ys)
-    if proto.course == "full":
+    if proto.course in ("full", "tunnel"):
         return _build_full_course(src, xs, ys, n, proto, formation, seed)
     zone_bounds = None
     if proto.spawn == "zone_entry":
@@ -318,6 +320,14 @@ def _build_full_course(src: MapSource, xs, ys, n: int, proto: Protocol, formatio
     tx = np.gradient(xs_e.astype(float)); ty = np.gradient(ys_e.astype(float))
     nrm_ = np.maximum(np.hypot(tx, ty), 1e-9); tx, ty = tx / nrm_, ty / nrm_
     lo, hi = _narrow_bounds(src, xs_e, ys_e, narrow_idx, proto)
+    if proto.course == "tunnel":
+        # the course ends a few metres past the narrow section
+        seg_all = np.hypot(np.diff(xs_e), np.diff(ys_e))
+        arc_all = np.concatenate([[0.0], np.cumsum(seg_all)])
+        fin = int(min(nwp - 1, np.searchsorted(arc_all, arc_all[hi] + proto.tunnel_exit_margin_m)))
+        xs_e, ys_e, nwp = xs_e[: fin + 1], ys_e[: fin + 1], fin + 1
+        tx, ty = tx[: fin + 1], ty[: fin + 1]
+        hi = min(hi, nwp - 1)
     # spawn: rank (or column) just past the start line, facing along the track
     lead_s = 1.0 + ((n - 1) * proto.column_gap if formation == "column" else 0.0)
     idx0 = _walk_forward(xs_e, ys_e, lead_s)
@@ -333,11 +343,14 @@ def _build_full_course(src: MapSource, xs, ys, n: int, proto: Protocol, formatio
         for i in range(n):
             poses[i] = col[i]; offsets.append(0.0)
     else:
-        gap = proto.lateral_gap_full
+        # spawn spread wide enough to be safe on the 9 m start line, but the
+        # LANES every lane-following baseline tracks are the tunnel-fitting rank
+        # tunnel course: spawn in the tunnel-fitting rank straight away (converging
+        # from a wider spread made ORCA's cars touch within the first metres)
+        spread = proto.lateral_gap if proto.course == "tunnel" else proto.lateral_gap_full
         for i in range(n):
-            off = (i - half) * gap
-            p = base + nrm * off
-            offsets.append(float(off)); poses[i] = [p[0], p[1], heading]
+            p = base + nrm * ((i - half) * spread)
+            offsets.append(float((i - half) * proto.lateral_gap)); poses[i] = [p[0], p[1], heading]
     if seed is not None and (proto.spawn_jitter_m > 0 or proto.spawn_jitter_rad > 0):
         rng = np.random.default_rng(seed)
         along = rng.uniform(-proto.spawn_jitter_m, proto.spawn_jitter_m, size=n)
@@ -353,5 +366,5 @@ def _build_full_course(src: MapSource, xs, ys, n: int, proto: Protocol, formatio
     return Reference(xs_e, ys_e, int(idx0), int(narrow_idx), poses, heading, t_pinch,
                      src.narrow_xy, src.gap_width_m, int(max(hi - narrow_idx, narrow_idx - lo, 1)),
                      offsets, False, goal, arclength,
-                     zone_entry_idx=int(lo), zone_exit_idx=int(hi), course="full",
+                     zone_entry_idx=int(lo), zone_exit_idx=int(hi), course=proto.course,
                      goal_buffer_wp=goal_buffer_wp)

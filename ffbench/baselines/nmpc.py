@@ -46,6 +46,7 @@ class NMPCConfig:
     w_coll_slack: float = 4000.0
     w_wall_slack: float = 4000.0
     max_iter: int = 150
+    accept_iterate: bool = True      # on a failed solve, accept IPOPT's near-feasible last iterate (NMPC) or not (DMPC holds its plan)
     st_substeps: int = 3
     # single-track parameters (f1tenth_gym defaults)
     st_mu: float = 1.0489
@@ -112,8 +113,8 @@ class LaneNMPC:
         p_wl = opti.parameter(N + 1, 1)
         p_wr = opti.parameter(N + 1, 1)
         p_vref = opti.parameter(1, 1)
-        p_nb = opti.parameter(max(M, 1), 2)
-        p_nbv = opti.parameter(max(M, 1), 2)
+        p_nbx = opti.parameter(max(M, 1), N + 1)      # predicted neighbour positions over the horizon
+        p_nby = opti.parameter(max(M, 1), N + 1)
 
         # dynamics
         if self.st:
@@ -174,9 +175,7 @@ class LaneNMPC:
         r_soft = c.soft_agent_dist
         for k in range(N + 1):
             for j in range(M):
-                nxk = p_nb[j, 0] + p_nbv[j, 0] * (k * dt)
-                nyk = p_nb[j, 1] + p_nbv[j, 1] * (k * dt)
-                dist_sq = (x[k] - nxk) ** 2 + (y[k] - nyk) ** 2 + 1e-4
+                dist_sq = (x[k] - p_nbx[j, k]) ** 2 + (y[k] - p_nby[j, k]) ** 2 + 1e-4
                 s = S_c[j, k]
                 opti.subject_to(dist_sq >= r_hard ** 2 - s)
                 opti.subject_to(s >= 0.0)
@@ -212,12 +211,16 @@ class LaneNMPC:
         opti.solver("ipopt", {"expand": True, "print_time": False, "verbose": False}, ipopt)
         self.opti, self.X, self.U = opti, X, U
         self.p = dict(x0=p_x0, ref=p_ref, tan=p_tan, wl=p_wl, wr=p_wr, vref=p_vref,
-                      nb=p_nb, nbv=p_nbv)
+                      nbx=p_nbx, nby=p_nby)
 
     # ---------------------------------------------------------------- solve
-    def solve(self, x0, ref_pts, tangents, wl, wr, vref, nb_pos, nb_vel
+    def solve(self, x0, ref_pts, tangents, wl, wr, vref, nb_pos, nb_vel, nb_traj=None
               ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
-        """Returns (u0, x1): first input and the planned state one step ahead."""
+        """Returns (u0, x1): first input and the planned state one step ahead.
+
+        Neighbours enter as predicted trajectories over the horizon: ``nb_traj``
+        (M, N+1, 2) when the caller has their plans (DMPC), otherwise a
+        constant-velocity extrapolation of ``nb_pos`` / ``nb_vel`` (NMPC)."""
         N, M, o = self.N, self.M, self.opti
         x0 = np.asarray(x0, float).reshape(self.nx, 1)
         if not np.all(np.isfinite(x0)):
@@ -228,13 +231,20 @@ class LaneNMPC:
         o.set_value(self.p["wl"], np.asarray(wl, float).reshape(N + 1, 1))
         o.set_value(self.p["wr"], np.asarray(wr, float).reshape(N + 1, 1))
         o.set_value(self.p["vref"], float(vref))
-        nb = np.full((max(M, 1), 2), 1000.0)
-        nbv = np.zeros((max(M, 1), 2))
+        nbx = np.full((max(M, 1), N + 1), 1000.0)
+        nby = np.full((max(M, 1), N + 1), 1000.0)
+        ks = np.arange(N + 1) * self.dt
         for j in range(min(M, len(nb_pos))):
-            nb[j] = nb_pos[j]
-            nbv[j] = nb_vel[j]
-        o.set_value(self.p["nb"], nb)
-        o.set_value(self.p["nbv"], nbv)
+            if nb_traj is not None and j < len(nb_traj) and nb_traj[j] is not None:
+                tr = np.asarray(nb_traj[j], float)
+                nbx[j, : len(tr)] = tr[: N + 1, 0]; nby[j, : len(tr)] = tr[: N + 1, 1]
+                if len(tr) < N + 1:
+                    nbx[j, len(tr):] = tr[-1, 0]; nby[j, len(tr):] = tr[-1, 1]
+            else:
+                nbx[j] = nb_pos[j][0] + nb_vel[j][0] * ks
+                nby[j] = nb_pos[j][1] + nb_vel[j][1] * ks
+        o.set_value(self.p["nbx"], nbx)
+        o.set_value(self.p["nby"], nby)
         warm = self.prev_X is not None
         if warm:
             try:
@@ -268,6 +278,8 @@ class LaneNMPC:
             # results use); on the full course one such iterate was a full-lock
             # spin at the start line -- a known, rare failure mode kept as-is.
             try:
+                if not self.cfg.accept_iterate:
+                    raise RuntimeError("hold plan")
                 xs, us = o.debug.value(self.X), o.debug.value(self.U)
                 g = float(np.max(np.abs(o.debug.value(o.g))))
                 if np.all(np.isfinite(xs)) and np.all(np.isfinite(us)) and g < 1.5e-1:
@@ -275,7 +287,8 @@ class LaneNMPC:
                     return np.asarray(us[:, 0]).ravel(), np.asarray(xs[:, 1]).ravel()
             except Exception:
                 pass
-            self.prev_X = self.prev_U = None
+            if self.cfg.accept_iterate:
+                self.prev_X = self.prev_U = None
             return None, None
 
 

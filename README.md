@@ -8,18 +8,34 @@ FastFunnels results.
 ```bash
 python run_experiment.py --orca   --num_agents=4 --map=standard_ON                 # f1tenth plant
 python run_experiment.py --orca   --num_agents=4 --map=standard_ON --sim=native    # RVO2 discs
-python run_experiment.py --nmpc   --num_agents=4 --map=standard_ON --dynamics=ks   # kinematic plant
+python run_experiment.py --dmpc   --num_agents=4 --map=standard_ON --dynamics=ks   # kinematic plant
+python run_experiment.py --dmpc   --num_agents=4 --map=standard_ON --course=tunnel --record  # start -> past the tunnel, mp4
 python run_experiment.py --deform --num_agents=4 --map=standard_ON --sim=native    # Gazebo + TurtleBot3
 python run_experiment.py --list
 ```
 
+**One course, every method, both backends.** Four agents start in a rank at the
+start of the map and have to reach the point 3 m past the 51 m narrow tunnel
+(`--course tunnel`). Top row: the f1tenth_gym car plant, gym renderer on car 0.
+Bottom row: each method in its own simulator, map view.
+ORCA · leader-follower · DMPC · GCBF+ · DEFORM · **FastFunnels (ours)**
 <p align="center">
-  <img src="ffbench_results/section_orca_n4_seed44_f1tenth_t0.gif" width="24%" alt="ORCA on the f1tenth plant"/>
-  <img src="ffbench_results/section_orca_n4_native_t0.gif" width="17%" alt="ORCA native RVO2"/>
-  <img src="ffbench_results/section_nmpc_n4_f1tenth_t0.gif" width="24%" alt="Decentralised NMPC"/>
-  <img src="ffbench_results/section_leader_follower_n4_f1tenth_t0.gif" width="24%" alt="Leader-follower convoy"/>
+  <img src="ffbench_results/gallery_tunnel/f1tenth_orca.gif" width="16%" alt="ORCA, f1tenth"/>
+  <img src="ffbench_results/gallery_tunnel/f1tenth_leader_follower.gif" width="16%" alt="leader-follower, f1tenth"/>
+  <img src="ffbench_results/gallery_tunnel/f1tenth_dmpc.gif" width="16%" alt="DMPC, f1tenth"/>
+  <img src="ffbench_results/gallery_tunnel/f1tenth_gcbf.gif" width="16%" alt="GCBF+, f1tenth"/>
+  <img src="ffbench_results/gallery_tunnel/f1tenth_deform.gif" width="16%" alt="DEFORM, f1tenth bridge"/>
+  <img src="ffbench_results/gallery_tunnel/f1tenth_fastfunnels.gif" width="16%" alt="FastFunnels, f1tenth"/>
 </p>
-<p align="center"><sub>Four agents through the <b>whole 51 m narrow section</b> of <code>standard_ON</code>, funnel mouth to exit: ORCA (f1tenth plant), ORCA (native RVO2), decentralised NMPC, leader-follower (which rear-ends itself mid-corridor). Full-resolution MP4s are next to the GIFs in <code>ffbench_results/</code>; <code>--zone section</code> reproduces them.</sub></p>
+<p align="center">
+  <img src="ffbench_results/gallery_tunnel/native_orca.gif" width="16%" alt="ORCA, RVO2"/>
+  <img src="ffbench_results/gallery_tunnel/native_leader_follower.gif" width="16%" alt="leader-follower, f1tenth_gym is its native simulator"/>
+  <img src="ffbench_results/gallery_tunnel/native_dmpc.gif" width="16%" alt="DMPC, f1tenth_gym is its native simulator"/>
+  <img src="ffbench_results/gallery_tunnel/native_gcbf.gif" width="16%" alt="GCBF+, PyRoboSim"/>
+  <img src="ffbench_results/gallery_tunnel/native_deform.gif" width="16%" alt="DEFORM, Gazebo + TurtleBot3"/>
+  <img src="ffbench_results/gallery_tunnel/native_fastfunnels.gif" width="16%" alt="FastFunnels, f1tenth_gym is its native simulator"/>
+</p>
+<p align="center"><sub>Same start, same finish line, same 0.6 m rank. DMPC is the only baseline that takes all four cars start to finish (12.0 s in the tunnel); GCBF+ gets all four through at walking pace (137 s on the car plant, 95 s in PyRoboSim); ORCA's outer cars touch in the bend on the car plant and its RVO2 discs exit with contacts; the convoy rear-ends itself in the bend; DEFORM creeps at the start (20x time-lapse). FastFunnels with four followers loses them at the start, with one follower it is the fastest run of all: 7.1 m/s through the tunnel (<code>gallery_tunnel/*_fastfunnels_n1.gif</code>). Leader-follower, DMPC and FastFunnels have no simulator other than f1tenth_gym, so their bottom clip is the same run in map view. MP4s next to the GIFs in <code>ffbench_results/gallery_tunnel/</code>; <code>--course tunnel --record</code> reproduces them; the earlier pinch-window and narrow-section clips are in <code>ffbench_results/gallery/</code>.</sub></p>
 
 ## The task
 
@@ -47,7 +63,7 @@ the trajectories.
 |---|---|---|---|---|---|---|
 | ORCA | RVO2 discs | yes | 1.0 / 1.0 | 4.5 / 4.0 | 4.5 / 5.2 | whole section: 1/3 trials, 17.8 s |
 | Leader-follower | f1tenth_gym | yes | – / 1.0 | 3.3 | 7.9 |
-| NMPC (decentralised, no leader) | f1tenth_gym | yes | – / 1.0 | 4.3 | 4.9 | whole 51 m section: 3/3, 11.0 s |
+| DMPC (decentralised MPC, no leader; `--nmpc` still accepted) | f1tenth_gym | yes | – / 1.0 | 4.3 | 4.9 | whole 51 m section: 3/3, 11.0 s |
 | GCBF+ (pretrained) | PyRoboSim + JAX | cross-over | 3 of 4 agents / 2 of 4 agents | 0.7 / 0.6 | – |
 | LAS (CBF-PPO, 3 agents) | its own f1tenth gym | same | 0.2 | 0.74 | 14.3 |
 | **FastFunnels** (ours: patch + NMPC follower) | f1tenth_gym | native | 1.0 (N=1, full course) | 7.1 | 7.3 |
@@ -57,18 +73,35 @@ the trajectories.
   <img src="ffbench_results/verify_orca_n4_traces.png" width="100%" alt="ORCA trajectories, both backends"/>
 </p> -->
 
-### Start line to finish line
+### Start of the map to past the tunnel (the gallery course)
+
+`--course tunnel`: spawn in the 0.6 m rank at the start line, drive the 9 m
+approach, the bend and the whole narrow section, stop 3 m past its exit. Four
+agents, `ffbench_results/tunnel_all.csv`:
+
+| method | on f1tenth_gym | in its own simulator |
+|---|---|---|
+| ORCA | 0/3 trials: outer cars touch in the bend | RVO2: 2-3 of 4 discs exit within 300 s, contacts on the way |
+| Leader-follower | 0/3: rear-ends itself in the bend | same run |
+| DMPC (basic decentralised MPC) | **3/3, all four through in 12.0 s at 5.0 m/s** | same run |
+| GCBF+ | 4/4 through, 137 s in the tunnel | PyRoboSim: 4/4 through in 95 s |
+| DEFORM | creeps at the start, 600 s timeout | Gazebo: same |
+| **FastFunnels**, 1 follower | **3/3, tunnel in 7.3 s at 7.1 m/s** | same run |
+| **FastFunnels**, 4 followers | 0/3: followers collide at the start | same run |
+
+### Start line to finish line (the whole 120 m track)
 
 `--course full` runs the whole 120 m track: the 9 m wide approach, the bend,
 the 51 m narrow section and the end box. At 4 agents no baseline finishes:
 ORCA gets 2-3 cars through and loses one at the funnel-mouth disc, the
-patch-free NMPC clears the narrow section in 11-13 s when it does not spin at
+patch-free DMPC clears the narrow section in 11-13 s when it does not spin at
 the start, the convoy rear-ends itself in the bend, DEFORM's planner cannot
 handle a 120 m goal. FastFunnels with one follower is the only run that
 completes the course: 20.4 s start to finish, 7.1 m/s through the narrow
 section (`ffbench_results/full_all.csv`). With 2 or 4 followers the inside-slot
 follower clips the wall-hugging triangle at the funnel mouth.
 
+<<<<<<< Updated upstream
 <table align="center">
   <tr>
     <td align="center">
@@ -81,10 +114,16 @@ follower clips the wall-hugging triangle at the funnel mouth.
     </td>
   </tr>
 </table>
+=======
+<p align="center">
+  <img src="ffbench_results/full_fastfunnels_n1_f1tenth_t0.gif" width="32%" alt="FastFunnels, full course"/>
+  <img src="ffbench_results/full_nmpc_n4_f1tenth_t0.gif" width="32%" alt="DMPC, full course"/>
+</p>
+>>>>>>> Stashed changes
 
 ```bash
 python run_experiment.py --fastfunnels --num_agents 1 --map standard_ON --course full --record   # needs FASTFUNNELS_ROOT
-python run_experiment.py --nmpc --num_agents 4 --map standard_ON --course full --spawn_jitter 0.1 --record
+python run_experiment.py --dmpc --num_agents 4 --map standard_ON --course full --spawn_jitter 0.1 --record
 ```
 
 ## Install
@@ -130,7 +169,7 @@ python -m ffbench.eval.collect "ffbench_results/*.jsonl" --out table  # merge ru
 Regenerate the figures and videos above:
 
 ```bash
-for b in orca leader_follower nmpc; do
+for b in orca leader_follower dmpc; do
   python run_experiment.py --$b --num_agents 4 --map standard_ON --sim both --trials 5 \
       --spawn_jitter 0.1 --save_traces --record --out ffbench_results/verify_${b}_n4
   python -m ffbench.eval.plot_traces ffbench_results/verify_${b}_n4 --trials 2
@@ -156,6 +195,8 @@ legacy_native/           the earlier hand-built Gazebo and PyRoboSim scenes, kep
 ## Notes
 
 - Seeds only matter with `--spawn_jitter`; a deterministic baseline repeats exactly otherwise.
+- ORCA runs with a 2 s obstacle time horizon (the RVO2 default of 6 s makes wall-aware cars converge into each other on the start line); the pinch-window rows were re-verified with it.
+- `--nmpc` and `--dmpc` are the same baseline; the videos and tables call it DMPC.
 - The 100 randomised layouts (`--map eval_matched`, `eval_heldout`) are not in this repo (1 GB); copy them from FastFunnels into `maps/`.
 - LAS runs on its own copy of `open_narrow_obs` whose pinch sits elsewhere, and its NPC speed setting has no effect; both are inherited from the released checkpoint.
 - Older demo videos of the hand-built scenes: [Google Drive](https://drive.google.com/drive/folders/1KrD17Asrr-kUL6zi8UAPdhaNJMniDBb9?usp=sharing).
