@@ -261,6 +261,22 @@ Things learned while verifying, all now built into the protocol:
   alone; the reported column samples the tightest spread only while at least
   two agents are in the zone, floored at one car width.
 
+### Whole narrow section (`--zone section`)
+
+Same spawn as the pinch window (7 m before the pinch), but the run is scored
+and filmed until every agent has left the **whole 51 m narrow section**
+(funnel mouth to where the corridor widens again). 3 trials, 4 agents,
+`ffbench_results/section_all.csv`:
+
+| baseline | eSR | section time (s) | note |
+|---|---|---|---|
+| nmpc (patch-free) | 1.0 | 11.0 | all four through in every trial |
+| orca (f1tenth) | 0.33 | 17.8 | one trial in three gets all four through; otherwise two cars touch deep in the corridor |
+| orca (native RVO2) | 0.0 | 16.0 | all discs exit every trial but with disc contacts below the 0.5 m threshold |
+| leader_follower | 0.0 | inf | the convoy rear-ends itself about 25 m into the corridor |
+
+The header GIFs of the repo README are these runs (ORCA: the completing seed).
+
 ### Full course (start line to finish line)
 
 `--course full` spawns the rank at the start line and scores the whole 51 m

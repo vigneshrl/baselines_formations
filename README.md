@@ -14,12 +14,12 @@ python run_experiment.py --list
 ```
 
 <p align="center">
-  <img src="ffbench_results/video_orca_n4_f1tenth_t0.gif" width="24%" alt="ORCA on the f1tenth plant"/>
-  <img src="ffbench_results/video_orca_n4_native_t0.gif" width="17%" alt="ORCA native RVO2"/>
-  <img src="ffbench_results/video_nmpc_n4_f1tenth_t0.gif" width="24%" alt="Decentralised NMPC"/>
-  <img src="ffbench_results/video_lf_n4_f1tenth_t0.gif" width="24%" alt="Leader-follower convoy"/>
+  <img src="ffbench_results/section_orca_n4_seed44_f1tenth_t0.gif" width="24%" alt="ORCA on the f1tenth plant"/>
+  <img src="ffbench_results/section_orca_n4_native_t0.gif" width="17%" alt="ORCA native RVO2"/>
+  <img src="ffbench_results/section_nmpc_n4_f1tenth_t0.gif" width="24%" alt="Decentralised NMPC"/>
+  <img src="ffbench_results/section_leader_follower_n4_f1tenth_t0.gif" width="24%" alt="Leader-follower convoy"/>
 </p>
-<p align="center"><sub>Four agents through the <code>standard_ON</code> pinch: ORCA (f1tenth), ORCA (native RVO2), decentralised NMPC, leader-follower. Full-resolution MP4s are next to the GIFs in <code>ffbench_results/</code>.</sub></p>
+<p align="center"><sub>Four agents through the <b>whole 51 m narrow section</b> of <code>standard_ON</code>, funnel mouth to exit: ORCA (f1tenth plant), ORCA (native RVO2), decentralised NMPC, leader-follower (which rear-ends itself mid-corridor). Full-resolution MP4s are next to the GIFs in <code>ffbench_results/</code>; <code>--zone section</code> reproduces them.</sub></p>
 
 ## The task
 
@@ -43,11 +43,11 @@ agents, 5 m/s target, single-track plant; DEFORM: 3 bridge + 3 native container 
 and `verify_repeats.csv` hold the rows; `ffbench_results/verify_*_traces.png`
 the trajectories.
 
-| baseline | native simulator | on f1tenth | eSR (native / f1tenth) | V_bar | T_zone |
-|---|---|---|---|---|---|
-| ORCA | RVO2 discs | yes | 1.0 / 1.0 | 4.5 / 4.0 | 4.5 / 5.2 |
+| baseline | native simulator | on f1tenth | eSR (native / f1tenth) | V_bar | T_zone | beyond the pinch window |
+|---|---|---|---|---|---|---|
+| ORCA | RVO2 discs | yes | 1.0 / 1.0 | 4.5 / 4.0 | 4.5 / 5.2 | whole section: 1/3 trials, 17.8 s |
 | Leader-follower | f1tenth_gym | yes | – / 1.0 | 3.3 | 7.9 |
-| NMPC (decentralised, no leader) | f1tenth_gym | yes | – / 1.0 | 4.3 | 4.9 |
+| NMPC (decentralised, no leader) | f1tenth_gym | yes | – / 1.0 | 4.3 | 4.9 | whole 51 m section: 3/3, 11.0 s |
 | GCBF+ (pretrained) | PyRoboSim + JAX | cross-over | 3 of 4 agents / 2 of 4 agents | 0.7 / 0.6 | – |
 | LAS (CBF-PPO, 3 agents) | its own f1tenth gym | same | 0.2 | 0.74 | 14.3 |
 | **FastFunnels** (ours: patch + NMPC follower) | f1tenth_gym | native | 1.0 (N=1, full course) | 7.1 | 7.3 |

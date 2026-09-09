@@ -31,7 +31,8 @@ def run_orca_native_trial(req, seed: int, trial: int) -> dict:
                                obstacle_polygons=rvo2_polygons(src, walls=walls, obstacles=True))
     metrics = ZoneMetrics(ref.xs, ref.ys, dt=dt, narrow_center_xy=ref.narrow_xy,
                           gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
-                          collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp, goal_xy=ref.goal_xy,
+                          collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp,
+                          goal_xy=(ref.goal_xy if proto.course == "full" else None),   # zone course: never stop before the zone is cleared
                           zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
                           finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
     xs, ys = ref.xs, ref.ys
@@ -80,7 +81,7 @@ def run_orca_native_trial(req, seed: int, trial: int) -> dict:
             reason = "goal"
             break
     row = {
-        "baseline": "orca", "sim": "native", "course": proto.course, "map": req.map_label, "n_agents": n,
+        "baseline": "orca", "sim": "native", "course": proto.course, "zone": proto.zone, "map": req.map_label, "n_agents": n,
         "dynamics": "rvo2_disc", "target_speed": speed, "seed": seed, "trial": trial,
         "formation": "abreast", "steps": steps, "sim_time_s": round(steps * dt, 3),
         "wall_time_s": round(time.time() - t0, 2), "terminated": reason,

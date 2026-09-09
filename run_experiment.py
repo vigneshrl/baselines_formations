@@ -49,6 +49,8 @@ def parse(argv=None):
     ap.add_argument("--course", choices=["zone", "full"], default="zone",
                     help="zone: spawn 7 m before the pinch, score the pinch window; "
                          "full: spawn at the start line, score the whole narrow section and start-to-finish")
+    ap.add_argument("--zone", choices=["pinch", "section"], default="pinch",
+                    help="zone course: score the +-12 m pinch window (pinch) or the whole narrow section (section)")
     ap.add_argument("--spawn", choices=["zone_entry", "track_start"], default="zone_entry")
     ap.add_argument("--lateral_gap", type=float, default=0.6)
     ap.add_argument("--zone_half_m", type=float, default=12.0)
@@ -104,7 +106,9 @@ def main(argv=None) -> int:
         return 2
     if args.course == "full" and args.max_steps == 6000:
         args.max_steps = 15000          # 150 s of sim for the 120 m course
-    proto = Protocol(course=args.course, spawn=args.spawn, formation=args.formation, lateral_gap=args.lateral_gap,
+    if args.zone == "section" and args.max_steps == 6000:
+        args.max_steps = 9000
+    proto = Protocol(course=args.course, zone=args.zone, spawn=args.spawn, formation=args.formation, lateral_gap=args.lateral_gap,
                      zone_half_m=args.zone_half_m, spawn_up_m=args.spawn_up_m,
                      max_steps=args.max_steps, trials=args.trials,
                      seed=args.seed, target_speed=args.speed, spawn_jitter_m=args.spawn_jitter,
@@ -117,7 +121,7 @@ def main(argv=None) -> int:
     sims = ["f1tenth", "native"] if args.sim == "both" else [args.sim]
     maps = resolve(args.map)
     stem = args.out or str(RESULTS / f"{spec.name}_{args.map.replace(':', '-')}_n{args.num_agents}_{args.sim}"
-                           + ("_full" if args.course == "full" else ""))
+                           + ("_full" if args.course == "full" else ("_section" if args.zone == "section" else "")))
     args.out_stem = stem
     jsonl = pathlib.Path(stem + ".jsonl")
     if jsonl.exists():

@@ -1,2 +1,2 @@
 baseline,sim,map,course,n_agents,dynamics,target_speed,trials,avg_speed_mps,success,time_to_goal_s,flow_rate,deformability,n_completed,n_collided,safety_rate,collision,spread_at_entry_m,spread_at_narrow_m,finished,t_course_s,v_course_mps,steps,sim_time_s,wall_time_s
-nmpc,f1tenth,standard_ON,full,4,st,5.0,3,1.667,0.0,13.48,0.031,17.177,1.3333,0.0,0.3333,1.0,1.775,0.0,0.1667,inf,4.3673,1149.0,11.49,26.2833
+nmpc,f1tenth,standard_ON,full,4,st,5.0,3,3.334,0.0,11.21,0.0373,35.356,2.3333,0.0,0.5833,1.0,7.307,0.0,0.25,inf,4.379,1719.6667,17.1967,25.3233

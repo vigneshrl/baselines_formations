@@ -25,6 +25,7 @@ class Protocol:
     course: str = "zone"               # zone: spawn before the pinch, score the pinch window
                                        # full: spawn at the track start, score the whole narrow section + start-to-finish
     spawn: str = "zone_entry"          # zone_entry | track_start (forced by course=full)
+    zone: str = "pinch"                # zone course: pinch (+-zone_half_m around the pinch) | section (the whole narrow section)
     narrow_width_factor: float = 1.3   # full course: a waypoint is "narrow" while corridor width < factor * gap
     lateral_gap_full: float = 1.0      # full course: rank spacing at the 9 m wide start line (0.6 m makes cars touch in the bend)
     finish_clearance_m: float = 0.6    # full course: finish = last waypoint with this much wall clearance
@@ -190,8 +191,26 @@ def build_reference(src: MapSource, xs: np.ndarray, ys: np.ndarray, n: int,
     closed = _is_closed(xs, ys)
     if proto.course == "full":
         return _build_full_course(src, xs, ys, n, proto, formation, seed)
+    zone_bounds = None
     if proto.spawn == "zone_entry":
+        if proto.zone == "section":
+            # the approach splice runs past the pinch as far as the straight line
+            # stays inside the corridor with a car's worth of margin (the real
+            # corridor bends away further down)
+            from shapely.geometry import Point
+            poly = src.corridor()
+            nx, ny = src.narrow_xy
+            t0 = src.tangent(src.nearest_wp(nx, ny))
+            down = 0.0
+            while down < 80.0:
+                pt = Point(nx + t0[0] * (down + 1.0), ny + t0[1] * (down + 1.0))
+                if not poly.contains(pt) or poly.boundary.distance(pt) < 1.2:
+                    break
+                down += 1.0
+            proto = Protocol(**{**proto.__dict__, "exit_down_m": max(proto.exit_down_m, down - 2.0)})
         xs_e, ys_e, ins_at, spawn_idx, narrow_idx, t, spacing = splice_approach(xs, ys, src, proto)
+        if proto.zone == "section":
+            zone_bounds = _narrow_bounds(src, xs_e, ys_e, narrow_idx, proto)
         heading = math.atan2(float(t[1]), float(t[0]))
         base = np.array([xs_e[spawn_idx], ys_e[spawn_idx]], dtype=float)
         idx0 = spawn_idx
@@ -238,9 +257,32 @@ def build_reference(src: MapSource, xs: np.ndarray, ys: np.ndarray, n: int,
     zone_half_wp = max(1, int(round(proto.zone_half_m / spacing)))
     goal = (float(xs_e[min(len(xs_e) - 1, narrow_idx + zone_half_wp)]),
             float(ys_e[min(len(ys_e) - 1, narrow_idx + zone_half_wp)]))
-    return Reference(xs_e, ys_e, int(idx0), int(narrow_idx), poses, heading, t,
-                     src.narrow_xy, src.gap_width_m, zone_half_wp, offsets, closed,
-                     goal, arclength)
+    ref = Reference(xs_e, ys_e, int(idx0), int(narrow_idx), poses, heading, t,
+                    src.narrow_xy, src.gap_width_m, zone_half_wp, offsets, closed,
+                    goal, arclength)
+    if zone_bounds is not None:
+        ref.zone_entry_idx, ref.zone_exit_idx = zone_bounds
+        ref.zone_half_wp = max(zone_bounds[1] - narrow_idx, narrow_idx - zone_bounds[0], 1)
+        ref.goal_xy = (float(xs_e[zone_bounds[1]]), float(ys_e[zone_bounds[1]]))
+    return ref
+
+
+def _narrow_bounds(src: MapSource, xs_e, ys_e, narrow_idx: int, proto: Protocol):
+    """First and last waypoint of the contiguous narrow section around the pinch."""
+    nwp = len(xs_e)
+    tx = np.gradient(xs_e.astype(float)); ty = np.gradient(ys_e.astype(float))
+    nrm_ = np.maximum(np.hypot(tx, ty), 1e-9); tx, ty = tx / nrm_, ty / nrm_
+    widths = np.zeros(nwp)
+    for i in range(nwp):
+        l, r = src.lateral_extent(float(xs_e[i]), float(ys_e[i]), (tx[i], ty[i]))
+        widths[i] = l + r
+    narrow = (widths > 0) & (widths < proto.narrow_width_factor * src.gap_width_m)
+    lo = hi = narrow_idx
+    while lo > 0 and narrow[lo - 1]:
+        lo -= 1
+    while hi < nwp - 1 and narrow[hi + 1]:
+        hi += 1
+    return int(lo), int(hi)
 
 
 def _walk_forward(xs, ys, s_target: float):
@@ -273,20 +315,9 @@ def _build_full_course(src: MapSource, xs, ys, n: int, proto: Protocol, formatio
         fin -= 1
     xs_e, ys_e = xs_e[: fin + 1], ys_e[: fin + 1]
     nwp = len(xs_e)
-    # local tangents
     tx = np.gradient(xs_e.astype(float)); ty = np.gradient(ys_e.astype(float))
     nrm_ = np.maximum(np.hypot(tx, ty), 1e-9); tx, ty = tx / nrm_, ty / nrm_
-    # corridor width at every waypoint (0 outside the corridor)
-    widths = np.zeros(nwp)
-    for i in range(nwp):
-        l, r = src.lateral_extent(float(xs_e[i]), float(ys_e[i]), (tx[i], ty[i]))
-        widths[i] = l + r
-    narrow = (widths > 0) & (widths < proto.narrow_width_factor * src.gap_width_m)
-    lo = hi = narrow_idx
-    while lo > 0 and narrow[lo - 1]:
-        lo -= 1
-    while hi < nwp - 1 and narrow[hi + 1]:
-        hi += 1
+    lo, hi = _narrow_bounds(src, xs_e, ys_e, narrow_idx, proto)
     # spawn: rank (or column) just past the start line, facing along the track
     lead_s = 1.0 + ((n - 1) * proto.column_gap if formation == "column" else 0.0)
     idx0 = _walk_forward(xs_e, ys_e, lead_s)

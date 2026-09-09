@@ -75,7 +75,7 @@ def main(argv=None):
             src = MapSource.load(resolve(mp)[0][1])
             n = int(rows[0]["n_agents"])
             course = rows[0].get("course", "zone")
-            ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(course=course), "abreast")
+            ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(course=course, zone=rows[0].get("zone", "pinch")), "abreast")
             cache[mp] = (src, ref)
         src, ref = cache[mp]
         _draw_map(ax, src, ref)

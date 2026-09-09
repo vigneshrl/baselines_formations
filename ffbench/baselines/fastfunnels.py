@@ -242,7 +242,8 @@ def run_fastfunnels(req, mode: str) -> List[dict]:
         ref = build_reference(src, xs, ys, n, proto, "abreast")
         metrics = ZoneMetrics(ref.xs, ref.ys, dt=proto.dt, narrow_center_xy=ref.narrow_xy,
                               gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
-                              collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp, goal_xy=ref.goal_xy,
+                              collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp,
+                          goal_xy=(ref.goal_xy if proto.course == "full" else None),   # zone course: never stop before the zone is cleared
                               zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
                           finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
 

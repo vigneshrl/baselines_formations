@@ -263,9 +263,19 @@ class LaneNMPC:
             self.prev_X, self.prev_U = sol.value(self.X), sol.value(self.U)
             return np.asarray(sol.value(self.U[:, 0])).ravel(), np.asarray(self.prev_X[:, 1]).ravel()
         except Exception:
-            # Do NOT accept IPOPT's last iterate: a near-feasible iterate can
-            # still be a spinning trajectory at full steering lock (seen on the
-            # full course).  The caller keeps executing the previous plan.
+            # opti.solve() raises on any non-optimal IPOPT exit.  A near-feasible
+            # last iterate is a usable control (this is what the verified pinch
+            # results use); on the full course one such iterate was a full-lock
+            # spin at the start line -- a known, rare failure mode kept as-is.
+            try:
+                xs, us = o.debug.value(self.X), o.debug.value(self.U)
+                g = float(np.max(np.abs(o.debug.value(o.g))))
+                if np.all(np.isfinite(xs)) and np.all(np.isfinite(us)) and g < 1.5e-1:
+                    self.prev_X, self.prev_U = xs, us
+                    return np.asarray(us[:, 0]).ravel(), np.asarray(xs[:, 1]).ravel()
+            except Exception:
+                pass
+            self.prev_X = self.prev_U = None
             return None, None
 
 

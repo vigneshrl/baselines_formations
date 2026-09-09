@@ -1,2 +1,2 @@
 baseline,sim,map,course,n_agents,dynamics,target_speed,trials,avg_speed_mps,success,time_to_goal_s,flow_rate,deformability,n_completed,n_collided,safety_rate,collision,spread_at_entry_m,spread_at_narrow_m,finished,t_course_s,v_course_mps,steps,sim_time_s,wall_time_s
-nmpc,f1tenth,standard_ON,zone,2,st,5.0,5,4.3968,1.0,4.6,0.1365,1.0096,2.0,0.0,1.0,0.0,0.6,0.0,0.0,inf,4.4156,461.0,4.61,2.484
+orca,f1tenth,standard_ON,zone,4,st,5.0,1,3.147,1.0,17.75,0.0707,1.473,4.0,0.0,1.0,0.0,1.808,0.0,0.0,inf,3.056,1821.0,18.21,5.87

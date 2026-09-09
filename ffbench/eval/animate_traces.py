@@ -28,7 +28,7 @@ def animate(trace: np.ndarray, map_label: str, row: dict, out: str, fps: int = 2
 
     src = MapSource.load(resolve(map_label)[0][1])
     n = trace.shape[1]
-    ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(course=course), "abreast")
+    ref = build_reference(src, src.centerline[:, 0], src.centerline[:, 1], n, Protocol(course=course, zone=row.get("zone", "pinch") if isinstance(row, dict) else "pinch"), "abreast")
     fig, ax = plt.subplots(figsize=(5, 7))
     _draw_map(ax, src, ref)
     cx, cy = src.narrow_xy

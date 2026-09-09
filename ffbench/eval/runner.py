@@ -88,7 +88,8 @@ def run_f1tenth_trial(baseline: str, controller: Controller, src: MapSource, map
     obs = sim.reset(ref.spawn_poses)
     metrics = ZoneMetrics(ref.xs, ref.ys, dt=proto.dt, narrow_center_xy=ref.narrow_xy,
                           gap_width_m=ref.gap_width_m, zone_half_width=ref.zone_half_wp,
-                          collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp, goal_xy=ref.goal_xy,
+                          collision_thresh=proto.collision_thresh, goal_buffer=ref.goal_buffer_wp,
+                          goal_xy=(ref.goal_xy if proto.course == "full" else None),   # zone course: never stop before the zone is cleared
                           zone_entry_idx=ref.zone_entry_idx, zone_exit_idx=ref.zone_exit_idx,
                           finish_line_m=(proto.goal_buffer_m if proto.course == "full" else None))
     ctx = TrialContext(src, map_label, pathlib.Path(map_dir), ref, proto, n, dynamics,
@@ -128,7 +129,7 @@ def run_f1tenth_trial(baseline: str, controller: Controller, src: MapSource, map
     row = {
         "baseline": baseline, "sim": "f1tenth", "map": map_label, "n_agents": n,
         "dynamics": dynamics, "target_speed": speed, "seed": seed, "trial": trial,
-        "formation": formation, "course": proto.course, "steps": steps, "sim_time_s": round(steps * proto.dt, 3),
+        "formation": formation, "course": proto.course, "zone": proto.zone, "steps": steps, "sim_time_s": round(steps * proto.dt, 3),
         "wall_time_s": round(time.time() - t0, 2), "terminated": reason,
         "gym_collision": gym_collision, "video": record,
     }
