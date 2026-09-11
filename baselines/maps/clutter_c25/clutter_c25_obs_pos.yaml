@@ -1,0 +1,182 @@
+scenario: clutter_c25
+base_map: on_obs_ext
+toll_pillars: []
+obstacles:
+- kind: tri
+  family: centre
+  big: false
+  center_m: [11.4007, -185.3096]
+  size_m: [1.3594, 1.1008]
+  angle_deg: 53.16
+  s_m: 247.95
+- kind: rect
+  family: centre
+  big: false
+  center_m: [5.4697, -196.8872]
+  size_m: [1.3168, 0.7608]
+  angle_deg: 168.76
+  s_m: 261.0
+- kind: tri
+  family: centre
+  big: true
+  center_m: [35.5177, -9.8106]
+  size_m: [2.7349, 3.4514]
+  angle_deg: 15.22
+  s_m: 39.15
+- kind: rect
+  family: centre
+  big: false
+  center_m: [2.4864, -199.5298]
+  size_m: [1.0292, 1.7668]
+  angle_deg: 49.46
+  s_m: 265.01
+- kind: disc
+  family: centre
+  big: true
+  center_m: [52.7686, -77.2612]
+  size_m: [3.3224, 2.7087]
+  angle_deg: 44.1
+  s_m: 111.43
+- kind: tri
+  family: centre
+  big: true
+  center_m: [69.1518, -105.9177]
+  size_m: [3.3626, 3.7629]
+  angle_deg: 138.75
+  s_m: 144.55
+- kind: tri
+  family: centre
+  big: false
+  center_m: [68.8342, -114.8539]
+  size_m: [1.0488, 1.5658]
+  angle_deg: 14.87
+  s_m: 153.59
+- kind: tri
+  family: centre
+  big: false
+  center_m: [57.244, -85.1212]
+  size_m: [0.6105, 0.6311]
+  angle_deg: 89.39
+  s_m: 120.46
+- kind: disc
+  family: centre
+  big: false
+  center_m: [14.3112, -180.0238]
+  size_m: [1.4037, 1.182]
+  angle_deg: 54.11
+  s_m: 241.93
+- kind: rect
+  family: centre
+  big: false
+  center_m: [60.0706, -89.273]
+  size_m: [0.6925, 1.8123]
+  angle_deg: 99.72
+  s_m: 125.48
+- kind: tri
+  family: centre
+  big: false
+  center_m: [20.5883, -166.3337]
+  size_m: [0.774, 0.8751]
+  angle_deg: 91.9
+  s_m: 226.87
+- kind: disc
+  family: centre
+  big: true
+  center_m: [66.837, -119.4258]
+  size_m: [3.732, 3.4111]
+  angle_deg: 140.25
+  s_m: 158.6
+- kind: rect
+  family: centre
+  big: true
+  center_m: [69.7775, -110.9221]
+  size_m: [3.7293, 2.6142]
+  angle_deg: 100.78
+  s_m: 149.57
+- kind: tri
+  family: centre
+  big: false
+  center_m: [8.7742, -190.7306]
+  size_m: [1.2725, 1.8007]
+  angle_deg: 112.34
+  s_m: 253.97
+- kind: rect
+  family: centre
+  big: true
+  center_m: [-1.7145, -202.1367]
+  size_m: [3.2415, 2.8057]
+  angle_deg: 41.86
+  s_m: 270.03
+- kind: tri
+  family: centre
+  big: false
+  center_m: [23.4773, -161.0377]
+  size_m: [1.602, 1.163]
+  angle_deg: 19.49
+  s_m: 220.84
+- kind: rect
+  family: centre
+  big: false
+  center_m: [63.1857, -94.43]
+  size_m: [1.8256, 1.4449]
+  angle_deg: 16.77
+  s_m: 131.5
+- kind: rect
+  family: centre
+  big: true
+  center_m: [28.7155, -2.5424]
+  size_m: [3.5381, 2.5137]
+  angle_deg: 42.89
+  s_m: 29.11
+- kind: tri
+  family: centre
+  big: true
+  center_m: [16.2035, -175.3653]
+  size_m: [2.8604, 3.14]
+  angle_deg: 108.73
+  s_m: 236.91
+- kind: tri
+  family: centre
+  big: false
+  center_m: [55.6163, -82.587]
+  size_m: [0.7538, 1.5523]
+  angle_deg: 99.65
+  s_m: 117.45
+- kind: disc
+  family: centre
+  big: false
+  center_m: [47.9686, -69.6062]
+  size_m: [1.2763, 0.9751]
+  angle_deg: 110.72
+  s_m: 102.39
+- kind: rect
+  family: centre
+  big: true
+  center_m: [33.6559, -7.4711]
+  size_m: [3.4882, 2.7139]
+  angle_deg: 87.82
+  s_m: 36.14
+- kind: tri
+  family: centre
+  big: true
+  center_m: [61.6056, -91.8657]
+  size_m: [3.3646, 3.3191]
+  angle_deg: 110.78
+  s_m: 128.49
+- kind: tri
+  family: centre
+  big: false
+  center_m: [-4.4826, -203.2664]
+  size_m: [0.6107, 0.7652]
+  angle_deg: 81.36
+  s_m: 273.04
+- kind: rect
+  family: centre
+  big: false
+  center_m: [67.4915, -101.2021]
+  size_m: [1.0941, 1.6701]
+  angle_deg: 79.2
+  s_m: 139.53
+narrow_regions:
+- center_m: [66.39035904264358, -120.32693259566462]
+  gap_width_m: 2.875

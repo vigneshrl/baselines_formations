@@ -1,0 +1,142 @@
+scenario: neck_escalate
+base_map: on_obs_ext
+toll_pillars: []
+obstacles:
+- kind: tri
+  zone: 1
+  big: true
+  center_m: [36.453, -11.5835]
+  size_m: [3.39, 3.8]
+  angle_deg: 225.0
+  s_m: 41.16
+  blocked_side: starboard
+  lane_left_m: 3.12
+- kind: rect
+  zone: 2
+  big: true
+  center_m: [48.3097, -70.5782]
+  size_m: [3.39, 3.8]
+  angle_deg: 45.0
+  s_m: 103.39
+  blocked_side: port
+  lane_left_m: 2.69
+- kind: disc
+  zone: 2
+  big: true
+  center_m: [66.9155, -119.4714]
+  size_m: [3.39, 3.8]
+  angle_deg: 225.0
+  s_m: 158.6
+  blocked_side: starboard
+  lane_left_m: 2.81
+- kind: tri
+  zone: 3
+  big: true
+  center_m: [22.3593, -162.7293]
+  size_m: [3.39, 3.8]
+  angle_deg: 45.0
+  s_m: 222.85
+  blocked_side: port
+  lane_left_m: 3.5
+- kind: rect
+  zone: 3
+  big: true
+  center_m: [14.5918, -179.0455]
+  size_m: [3.39, 3.8]
+  angle_deg: 225.0
+  s_m: 240.92
+  blocked_side: starboard
+  lane_left_m: 2.62
+- kind: disc
+  zone: 3
+  big: true
+  center_m: [6.672, -195.2813]
+  size_m: [3.39, 3.8]
+  angle_deg: 45.0
+  s_m: 258.99
+  blocked_side: port
+  lane_left_m: 2.94
+- kind: tri
+  zone: 3
+  big: true
+  center_m: [-8.4249, -203.9558]
+  size_m: [3.39, 3.8]
+  angle_deg: 225.0
+  s_m: 277.06
+  blocked_side: starboard
+  lane_left_m: 3.75
+- kind: rect
+  zone: 4
+  big: true
+  center_m: [-67.796, -189.2266]
+  size_m: [1.5255, 1.71]
+  angle_deg: 45.0
+  s_m: 340.3
+  blocked_side: port
+  lane_left_m: 3.38
+- kind: disc
+  zone: 4
+  big: true
+  center_m: [-69.7897, -189.4649]
+  size_m: [1.5255, 1.71]
+  angle_deg: 225.0
+  s_m: 342.31
+  blocked_side: starboard
+  lane_left_m: 3.38
+- kind: tri
+  zone: 4
+  big: true
+  center_m: [-71.7834, -189.7031]
+  size_m: [1.5255, 1.71]
+  angle_deg: 45.0
+  s_m: 344.32
+  blocked_side: port
+  lane_left_m: 3.88
+- kind: rect
+  zone: 4
+  big: true
+  center_m: [-73.777, -189.9413]
+  size_m: [1.5255, 1.71]
+  angle_deg: 225.0
+  s_m: 346.32
+  blocked_side: starboard
+  lane_left_m: 3.56
+- kind: disc
+  zone: 4
+  big: true
+  center_m: [-74.7739, -190.0604]
+  size_m: [1.5255, 1.71]
+  angle_deg: 45.0
+  s_m: 347.33
+  blocked_side: port
+  lane_left_m: 3.56
+- kind: tri
+  zone: 4
+  big: true
+  center_m: [-76.7676, -190.2987]
+  size_m: [1.5255, 1.71]
+  angle_deg: 225.0
+  s_m: 349.33
+  blocked_side: starboard
+  lane_left_m: 3.94
+- kind: rect
+  zone: 4
+  big: true
+  center_m: [-78.7613, -190.5369]
+  size_m: [1.5255, 1.71]
+  angle_deg: 45.0
+  s_m: 351.34
+  blocked_side: port
+  lane_left_m: 3.56
+- kind: disc
+  zone: 4
+  big: true
+  center_m: [-80.7549, -190.7752]
+  size_m: [1.5255, 1.71]
+  angle_deg: 225.0
+  s_m: 353.35
+  blocked_side: starboard
+  lane_left_m: 3.56
+narrow_regions:
+- center_m: [14.591776730578289, -179.0455205186732]
+  gap_width_m: 2.625

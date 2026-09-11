@@ -20,79 +20,79 @@
       ]
     },
     {
-      "name": "extended_open_narrow_obs",
-      "source": "maps/baseline_walls/bw_on_obs_ext000",
+      "name": "clutter_c25",
+      "source": "clutter_c25 (base on_obs_ext)",
       "length_m": 356.4,
-      "n_obstacles": 5,
+      "n_obstacles": 25,
       "resolution": 0.0625,
       "origin": [
         -98.37046810984234,
         -218.60311864459442
       ],
       "files": [
-        "extended_open_narrow_obs.png",
-        "extended_open_narrow_obs_bounds.json",
-        "extended_open_narrow_obs_centerline.csv",
-        "extended_open_narrow_obs_map.pgm",
-        "extended_open_narrow_obs_map.yaml",
-        "extended_open_narrow_obs_obs_pos.yaml"
+        "clutter_c25.png",
+        "clutter_c25_bounds.json",
+        "clutter_c25_centerline.csv",
+        "clutter_c25_map.pgm",
+        "clutter_c25_map.yaml",
+        "clutter_c25_obs_pos.yaml"
       ]
     },
     {
-      "name": "lshape_obs",
-      "source": "maps/scenario_walls/sw_lshape001",
-      "length_m": 107.0,
-      "n_obstacles": 6,
+      "name": "neck_escalate",
+      "source": "neck_escalate (base on_obs_ext)",
+      "length_m": 356.4,
+      "n_obstacles": 15,
       "resolution": 0.0625,
       "origin": [
-        -14.625,
-        -73.625
+        -98.37046810984234,
+        -218.60311864459442
       ],
       "files": [
-        "lshape_obs.png",
-        "lshape_obs_bounds.json",
-        "lshape_obs_centerline.csv",
-        "lshape_obs_map.pgm",
-        "lshape_obs_map.yaml",
-        "lshape_obs_obs_pos.yaml"
+        "neck_escalate.png",
+        "neck_escalate_bounds.json",
+        "neck_escalate_centerline.csv",
+        "neck_escalate_map.pgm",
+        "neck_escalate_map.yaml",
+        "neck_escalate_obs_pos.yaml"
       ]
     },
     {
-      "name": "zigzag_obs",
-      "source": "maps/scenario_walls/sw_zigzag001",
-      "length_m": 210.7,
-      "n_obstacles": 6,
+      "name": "neck_escalate_easy",
+      "source": "neck_escalate_easy (base on_obs_ext)",
+      "length_m": 356.4,
+      "n_obstacles": 15,
       "resolution": 0.0625,
       "origin": [
-        -22.625,
-        -24.625
+        -98.37046810984234,
+        -218.60311864459442
       ],
       "files": [
-        "zigzag_obs.png",
-        "zigzag_obs_bounds.json",
-        "zigzag_obs_centerline.csv",
-        "zigzag_obs_map.pgm",
-        "zigzag_obs_map.yaml",
-        "zigzag_obs_obs_pos.yaml"
+        "neck_escalate_easy.png",
+        "neck_escalate_easy_bounds.json",
+        "neck_escalate_easy_centerline.csv",
+        "neck_escalate_easy_map.pgm",
+        "neck_escalate_easy_map.yaml",
+        "neck_escalate_easy_obs_pos.yaml"
       ]
     },
     {
-      "name": "slalom_obs",
-      "source": "maps/scenario_walls/sw_slalom_g7_5000",
-      "length_m": 149.4,
-      "n_obstacles": 6,
+      "name": "slalom_longbars45",
+      "source": "mf_slalom_lb45",
+      "length_m": 186.0,
+      "n_obstacles": 0,
       "resolution": 0.0625,
       "origin": [
         -17.625,
-        -15.5
+        -17.0
       ],
       "files": [
-        "slalom_obs.png",
-        "slalom_obs_bounds.json",
-        "slalom_obs_centerline.csv",
-        "slalom_obs_map.pgm",
-        "slalom_obs_map.yaml",
-        "slalom_obs_obs_pos.yaml"
+        "slalom_longbars45.png",
+        "slalom_longbars45_bounds.json",
+        "slalom_longbars45_centerline.csv",
+        "slalom_longbars45_map.pgm",
+        "slalom_longbars45_map.yaml",
+        "slalom_longbars45_obs_pos.yaml"
       ]
     }
   ]

@@ -1,6 +1,6 @@
-image: zigzag_obs_map.pgm
+image: slalom_longbars45_map.pgm
 resolution: 0.0625
-origin: [-22.625, -24.625, 0.0]
+origin: [-17.625, -17.0, 0.0]
 negate: 0
 occupied_thresh: 0.45
 free_thresh: 0.196
